@@ -1,0 +1,12 @@
+{
+  "categories": [
+    { "name": "Airport",   "patterns": ["-airport-", "airport-"] },
+    { "name": "Aircraft",  "patterns": ["-aircraft-"] },
+    { "name": "Livery",    "patterns": ["-livery-"] },
+    { "name": "Scenery",   "patterns": ["scenery", "cityscape", "landmarks"] },
+    { "name": "Library",   "patterns": ["commonlibrary", "modellib", "material-lib", "-library-","-lib","lib-"] },
+    { "name": "Missions",  "patterns": ["activities", "challenges", "mission", "training", "discovery", "travelbook"] },
+    { "name": "Utilities", "patterns": ["jetways", "toolbar", "gsx", "flow"] }
+  ],
+  "defaultCategory": "Other"
+}
