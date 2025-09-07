@@ -1,15 +1,20 @@
 name: build-windows
 
+permissions:
+  contents: write  # allow creating releases with GITHUB_TOKEN
+
 on:
-  # Run manually from the Actions tab
   workflow_dispatch:
-  # Auto-build when you push a tag like v0.2.0
   push:
-    tags: ['v*']
+    tags:
+      - 'v*'
 
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
 
     steps:
       - name: Checkout
@@ -28,10 +33,9 @@ jobs:
           pip install pyinstaller
 
       - name: Build EXE with PyInstaller
-        # PowerShell is the default shell on windows-latest
         run: |
           pyinstaller --noconsole --windowed `
-            --name "MSFS Content Wrangler" `
+            --name msfs-content-wrangler `
             --icon icons/app.ico `
             --collect-all PySide6 `
             --add-data "resources.qss;." `
@@ -39,23 +43,23 @@ jobs:
             --add-data "icons\*.*;icons" `
             main.py
 
-      - name: Zip dist
+      - name: Zip dist folder (contains the .exe)
         run: |
-          $Folder = "dist\MSFS Content Wrangler"
-          Compress-Archive -Path "$Folder\*" -DestinationPath msfs-content-wrangler.zip
+          $dist = "dist\msfs-content-wrangler"
+          if (!(Test-Path $dist)) { throw "Dist folder not found: $dist" }
+          Compress-Archive -Path "$dist\*" -DestinationPath msfs-content-wrangler.zip -Force
 
-      # Always upload an artifact for manual runs (visible in the Actions run)
-      - name: Upload artifact
+      - name: Upload artifact (for manual runs)
         uses: actions/upload-artifact@v4
         with:
           name: msfs-content-wrangler
           path: msfs-content-wrangler.zip
 
-      # If this run was triggered by a tag, also publish a GitHub Release
       - name: Upload to GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: msfs-content-wrangler.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          files: |
+            msfs-content-wrangler.zip
+          # If your repo/org enforces read-only GITHUB_TOKEN, add:
+          # token: ${{ secrets.RELEASE_PAT }}
