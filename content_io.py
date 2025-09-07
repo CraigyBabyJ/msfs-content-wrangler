@@ -109,11 +109,18 @@ def find_content_xml(custom_path_str: str | None = None) -> Path | None:
 
 
 def load_packages(xml_path: Path, rules_path: Path) -> Tuple[List[PackageRow], dict]:
+    print(f"DEBUG: Loading packages from: {xml_path}")
+    if not xml_path.exists():
+        print(f"ERROR: Content.xml not found at: {xml_path}")
+        return [], {}  # Return empty list if file not found
+
     rules = load_rules(rules_path)
     tree = ET.parse(xml_path)
     root = tree.getroot()
+    packages_found = root.findall("./Package")
+    print(f"DEBUG: Found {len(packages_found)} <Package> elements in Content.xml")
     rows: List[PackageRow] = []
-    for idx, el in enumerate(root.findall("./Package")):
+    for idx, el in enumerate(packages_found):
         name = el.get("name", "").strip()
         status = el.get("active", "").strip() or STATUS_ACTIVATED
         src, sim = derive_source_and_sim(name)
@@ -130,8 +137,10 @@ def load_packages(xml_path: Path, rules_path: Path) -> Tuple[List[PackageRow], d
                 vendor=vendor,
                 raw_index=idx,
                 thumbnail_path=thumb_path,
+                original_status=status,
             )
         )
+    print(f"DEBUG: Populated {len(rows)} PackageRow objects.")
     return rows, rules
 
 

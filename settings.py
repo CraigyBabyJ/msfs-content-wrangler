@@ -1,6 +1,7 @@
+
 import copy
 from pathlib import Path
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import Qt, QSettings, Signal
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -36,6 +37,9 @@ class AppSettings:
 
 
 class SettingsDialog(QDialog):
+    # Signal the main window listens to so it can clear the real cache instance
+    request_clear_thumb_cache = Signal()
+
     def __init__(
         self, rules: dict, config: dict, current_xml_path_str: str, parent=None
     ):
@@ -150,30 +154,46 @@ class SettingsDialog(QDialog):
         display_group_box = QGroupBox("Display")
         display_group_layout = QVBoxLayout(display_group_box)
         self.check_show_thumbs = QCheckBox("Show package thumbnails in list")
-        self.check_show_thumbs.setChecked(
-            self.config_copy.get("show_thumbnails", False)
-        )
+        self.check_show_thumbs.setChecked(self.config_copy.get("show_thumbnails", False))
         display_group_layout.addWidget(self.check_show_thumbs)
 
         self.check_clean_legacy = QCheckBox("Clean legacy FS20 mods")
         self.check_clean_legacy.setToolTip(
             "Automatically remove legacy FS2020 community mod references from Content.xml when saving."
         )
-        self.check_clean_legacy.setChecked(
-            self.config_copy.get("clean_legacy_fs20", True)
-        )
+        self.check_clean_legacy.setChecked(self.config_copy.get("clean_legacy_fs20", True))
         display_group_layout.addWidget(self.check_clean_legacy)
 
         layout.addWidget(display_group_box)
 
+        # --- Maintenance ---
+        maint_group = QGroupBox("Maintenance")
+        maint_layout = QVBoxLayout(maint_group)
+        btn_clear = QPushButton("Clear thumbnail cache")
+        btn_clear.setToolTip("Delete thumbnails.json mappings (and any legacy /cache/thumbs PNGs).")
+        btn_clear.clicked.connect(self._on_clear_thumbs_clicked)
+        maint_layout.addWidget(btn_clear)
+        layout.addWidget(maint_group)
+
         layout.addStretch(1)
         self.tabs.addTab(page, "Appearance")
 
+    def _on_clear_thumbs_clicked(self):
+        if (
+            QMessageBox.question(
+                self,
+                "Clear thumbnail cache",
+                "This will delete the saved thumbnail mappings.\n"
+                "They'll be re-discovered as you scroll.\n\nProceed?",
+            )
+            == QMessageBox.Yes
+        ):
+            self.request_clear_thumb_cache.emit()
+            QMessageBox.information(self, "Cleared", "Thumbnail cache cleared.")
+
     def select_content_path(self):
         start_dir = str(Path(self.content_path_input.text()).parent or Path.home())
-        path, _ = QFileDialog.getOpenFileName(
-            self, "Select Content.xml", start_dir, "XML Files (*.xml)"
-        )
+        path, _ = QFileDialog.getOpenFileName(self, "Select Content.xml", start_dir, "XML Files (*.xml)")
         if path:
             self.content_path_input.setText(path)
 
@@ -201,9 +221,7 @@ class SettingsDialog(QDialog):
             self.pat_list.addItems(category.get("patterns", []))
 
     def add_category(self):
-        text, ok = QInputDialog.getText(
-            self, "Add Category", "Enter new category name:"
-        )
+        text, ok = QInputDialog.getText(self, "Add Category", "Enter new category name:")
         if ok and text:
             if self.find_category_by_name(text):
                 QMessageBox.warning(self, "Duplicate", "Category already exists.")
@@ -221,11 +239,7 @@ class SettingsDialog(QDialog):
         if not category:
             return
         if (
-            QMessageBox.question(
-                self,
-                "Remove Category",
-                f'Are you sure you want to remove the "{cat_name}" category?',
-            )
+            QMessageBox.question(self, "Remove Category", f'Are you sure you want to remove the "{cat_name}" category?',)
             == QMessageBox.Yes
         ):
             self.rules_copy["categories"].remove(category)
