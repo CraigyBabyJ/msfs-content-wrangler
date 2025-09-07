@@ -1,7 +1,7 @@
 name: build-windows
 
 permissions:
-  contents: write  # allow creating releases with GITHUB_TOKEN
+  contents: write  # allow creating releases with the default GITHUB_TOKEN
 
 on:
   workflow_dispatch:
@@ -32,6 +32,7 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
+      # Build a folder-based dist (best for PySide6/Qt)
       - name: Build EXE with PyInstaller
         run: |
           pyinstaller --noconsole --windowed `
@@ -43,11 +44,58 @@ jobs:
             --add-data "icons\*.*;icons" `
             main.py
 
-      - name: Zip dist folder (contains the .exe)
+      - name: Verify EXE exists
+        run: |
+          $exe = "dist\msfs-content-wrangler\msfs-content-wrangler.exe"
+          if (!(Test-Path $exe)) {
+            Get-ChildItem -Recurse dist
+            throw "EXE not found at $exe"
+          }
+
+      # ---- Slim the PySide6 payload safely ----
+      - name: Prune unused PySide6 files
         run: |
           $dist = "dist\msfs-content-wrangler"
-          if (!(Test-Path $dist)) { throw "Dist folder not found: $dist" }
-          Compress-Archive -Path "$dist\*" -DestinationPath msfs-content-wrangler.zip -Force
+
+          # 1) Remove package metadata (not needed at runtime)
+          Get-ChildItem $dist -Directory -Filter "*.dist-info" |
+            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+          # 2) Remove Qt tools/extras we don't use
+          $rm = @(
+            "PySide6\assistant",
+            "PySide6\designer",
+            "PySide6\linguist",
+            "PySide6\qml",
+            "PySide6\translations",
+            "PySide6\examples"
+          )
+          foreach ($rel in $rm) {
+            $p = Join-Path $dist $rel
+            if (Test-Path $p) { Remove-Item $p -Recurse -Force -ErrorAction SilentlyContinue }
+          }
+
+          # 3) Keep only common image/icon plugins
+          $imgDir  = Join-Path $dist "PySide6\plugins\imageformats"
+          if (Test-Path $imgDir) {
+            $keep = @("qjpeg.dll","qico.dll","qpng.dll","qgif.dll","qsvg.dll")
+            Get-ChildItem $imgDir -Filter *.dll |
+              Where-Object { $keep -notcontains $_.Name } |
+              Remove-Item -Force -ErrorAction SilentlyContinue
+          }
+          $iconDir = Join-Path $dist "PySide6\plugins\iconengines"
+          if (Test-Path $iconDir) {
+            $keepIcon = @("qsvgicon.dll")
+            Get-ChildItem $iconDir -Filter *.dll |
+              Where-Object { $keepIcon -notcontains $_.Name } |
+              Remove-Item -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Zip dist folder (contains the .exe)
+        run: |
+          $src = "dist\msfs-content-wrangler"
+          Compress-Archive -Path "$src\*" -DestinationPath msfs-content-wrangler.zip -Force
+          Get-Item msfs-content-wrangler.zip
 
       - name: Upload artifact (for manual runs)
         uses: actions/upload-artifact@v4
@@ -61,5 +109,5 @@ jobs:
         with:
           files: |
             msfs-content-wrangler.zip
-          # If your repo/org enforces read-only GITHUB_TOKEN, add:
-          # token: ${{ secrets.RELEASE_PAT }}
+        # If your org enforces read-only GITHUB_TOKEN, add a PAT secret and uncomment:
+        #   token: ${{ secrets.RELEASE_PAT }}
