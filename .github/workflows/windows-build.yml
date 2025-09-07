@@ -1,0 +1,61 @@
+name: build-windows
+
+on:
+  # Run manually from the Actions tab
+  workflow_dispatch:
+  # Auto-build when you push a tag like v0.2.0
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build EXE with PyInstaller
+        # PowerShell is the default shell on windows-latest
+        run: |
+          pyinstaller --noconsole --windowed `
+            --name "MSFS Content Wrangler" `
+            --icon icons/app.ico `
+            --collect-all PySide6 `
+            --add-data "resources.qss;." `
+            --add-data "rules.json;." `
+            --add-data "icons\*.*;icons" `
+            main.py
+
+      - name: Zip dist
+        run: |
+          $Folder = "dist\MSFS Content Wrangler"
+          Compress-Archive -Path "$Folder\*" -DestinationPath msfs-content-wrangler.zip
+
+      # Always upload an artifact for manual runs (visible in the Actions run)
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: msfs-content-wrangler
+          path: msfs-content-wrangler.zip
+
+      # If this run was triggered by a tag, also publish a GitHub Release
+      - name: Upload to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: msfs-content-wrangler.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
