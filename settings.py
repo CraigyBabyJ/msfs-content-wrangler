@@ -1,4 +1,3 @@
-
 import copy
 from pathlib import Path
 from PySide6.QtCore import Qt, QSettings, Signal
@@ -154,14 +153,18 @@ class SettingsDialog(QDialog):
         display_group_box = QGroupBox("Display")
         display_group_layout = QVBoxLayout(display_group_box)
         self.check_show_thumbs = QCheckBox("Show package thumbnails in list")
-        self.check_show_thumbs.setChecked(self.config_copy.get("show_thumbnails", False))
+        self.check_show_thumbs.setChecked(
+            self.config_copy.get("show_thumbnails", False)
+        )
         display_group_layout.addWidget(self.check_show_thumbs)
 
         self.check_clean_legacy = QCheckBox("Clean legacy FS20 mods")
         self.check_clean_legacy.setToolTip(
             "Automatically remove legacy FS2020 community mod references from Content.xml when saving."
         )
-        self.check_clean_legacy.setChecked(self.config_copy.get("clean_legacy_fs20", True))
+        self.check_clean_legacy.setChecked(
+            self.config_copy.get("clean_legacy_fs20", True)
+        )
         display_group_layout.addWidget(self.check_clean_legacy)
 
         layout.addWidget(display_group_box)
@@ -170,7 +173,9 @@ class SettingsDialog(QDialog):
         maint_group = QGroupBox("Maintenance")
         maint_layout = QVBoxLayout(maint_group)
         btn_clear = QPushButton("Clear thumbnail cache")
-        btn_clear.setToolTip("Delete thumbnails.json mappings (and any legacy /cache/thumbs PNGs).")
+        btn_clear.setToolTip(
+            "Delete thumbnails.json mappings (and any legacy /cache/thumbs PNGs)."
+        )
         btn_clear.clicked.connect(self._on_clear_thumbs_clicked)
         maint_layout.addWidget(btn_clear)
         layout.addWidget(maint_group)
@@ -193,7 +198,9 @@ class SettingsDialog(QDialog):
 
     def select_content_path(self):
         start_dir = str(Path(self.content_path_input.text()).parent or Path.home())
-        path, _ = QFileDialog.getOpenFileName(self, "Select Content.xml", start_dir, "XML Files (*.xml)")
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Select Content.xml", start_dir, "XML Files (*.xml)"
+        )
         if path:
             self.content_path_input.setText(path)
 
@@ -221,7 +228,9 @@ class SettingsDialog(QDialog):
             self.pat_list.addItems(category.get("patterns", []))
 
     def add_category(self):
-        text, ok = QInputDialog.getText(self, "Add Category", "Enter new category name:")
+        text, ok = QInputDialog.getText(
+            self, "Add Category", "Enter new category name:"
+        )
         if ok and text:
             if self.find_category_by_name(text):
                 QMessageBox.warning(self, "Duplicate", "Category already exists.")
@@ -239,7 +248,11 @@ class SettingsDialog(QDialog):
         if not category:
             return
         if (
-            QMessageBox.question(self, "Remove Category", f'Are you sure you want to remove the "{cat_name}" category?',)
+            QMessageBox.question(
+                self,
+                "Remove Category",
+                f'Are you sure you want to remove the "{cat_name}" category?',
+            )
             == QMessageBox.Yes
         ):
             self.rules_copy["categories"].remove(category)

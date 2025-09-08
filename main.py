@@ -500,7 +500,9 @@ class MainWindow(QMainWindow):
         self.addToolBar(tb)
 
         btn_switch = QAction("Switch Content.xml…", self)
-        btn_switch.setToolTip("Switch to a different Content.xml file from a list of auto-detected files.")
+        btn_switch.setToolTip(
+            "Switch to a different Content.xml file from a list of auto-detected files."
+        )
         btn_switch.triggered.connect(self._switch_content_xml)
         tb.addAction(btn_switch)
         tb.addSeparator()
@@ -581,10 +583,25 @@ class MainWindow(QMainWindow):
     def _build_tabs(self):
         self.tabs.clear()
         tabs_spec = [
-            ("Official Store (FS2024)", "official", "fs24", "Packages installed from the official Microsoft Flight Simulator 2024 marketplace."),
-            ("Community Folder (FS2024)", "community", "fs24", "Packages installed in your Microsoft Flight Simulator 2024 Community folder."),
+            (
+                "Official Store (FS2024)",
+                "official",
+                "fs24",
+                "Packages installed from the official Microsoft Flight Simulator 2024 marketplace.",
+            ),
+            (
+                "Community Folder (FS2024)",
+                "community",
+                "fs24",
+                "Packages installed in your Microsoft Flight Simulator 2024 Community folder.",
+            ),
             None,  # separator
-            ("Official Store (FS2020)", "official", "fs20", "Packages installed from the official Microsoft Flight Simulator 2020 marketplace."),
+            (
+                "Official Store (FS2020)",
+                "official",
+                "fs20",
+                "Packages installed from the official Microsoft Flight Simulator 2020 marketplace.",
+            ),
         ]
         for spec in tabs_spec:
             if spec is None:
@@ -860,7 +877,7 @@ class MainWindow(QMainWindow):
         )
         more = "" if len(to_disable) <= 12 else f"\n  …and {len(to_disable)-12} more."
         msg = (
-            f"This will disable {len(to_disable)} Official Store airport(s) that also exists in you Community Folder.\n\n"
+            f"This will disable {len(to_disable)} Official Store airport(s) that also exists in your Community Folder.\n\n"
             f"To be disabled:\n{sample_lines}{more}\n\n"
             "Community versions remain active.\n\n"
             "Proceed?"
