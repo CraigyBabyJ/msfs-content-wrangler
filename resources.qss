@@ -1,19 +1,43 @@
 /* Minimal dark theme */
 * { font-family: Segoe UI, Arial; }
 QWidget { background: #121212; color: #eaeaea; }
-QLineEdit, QComboBox, QTableView, QHeaderView::section, QListWidget { 
-    background: #1e1e1e; 
-    color: #eaeaea; 
-    border: 1px solid #333; 
+
+QLineEdit, QComboBox, QTableView, QHeaderView::section, QListWidget {
+    background: #1e1e1e;
+    color: #eaeaea;
+    border: 1px solid #333;
 }
-QPushButton { background: #2a2a2a; border: 1px solid #3a3a3a; padding: 6px 10px; }
+
+QPushButton {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    padding: 6px 10px;
+    color: #eaeaea;
+    border-radius: 8px;
+}
 QPushButton:hover { background: #333; }
-QPushButton:disabled { color: #777; border-color: #222; }
+QPushButton:pressed { background: #232323; }
+QPushButton:disabled { color: #777; border-color: #222; background: #1b1b1b; }
+
 QCheckBox { spacing: 8px; }
 QStatusBar { background: #1a1a1a; }
-QTabBar::tab { background: #1b1b1b; padding: 8px 12px; border: 1px solid #333; }
+
+QTabBar::tab {
+    background: #1b1b1b;
+    padding: 8px 12px;
+    border: 1px solid #333;
+}
 QTabBar::tab:selected { background: #262626; }
+
 QToolBar { background: #1a1a1a; border: 0; }
+/* Make toolbar buttons look like real buttons */
+QToolBar QToolButton {
+    padding: 6px 10px;
+    margin: 2px 4px;
+    border-radius: 8px;
+    color: #eaeaea;
+}
+QToolBar QToolButton:hover { background-color: rgba(255,255,255,0.06); }
 
 /* List selection color */
 QListWidget::item:selected {
@@ -28,7 +52,6 @@ QTableView::indicator:checked {
     width: 12px;
     height: 12px;
 }
-
 QTableView::indicator:unchecked {
     background-color: #F44336; /* Red */
     border: 1px solid #3a3a3a;
@@ -43,15 +66,12 @@ QGroupBox QCheckBox::indicator, QGroupBox QRadioButton::indicator {
     border-radius: 8px;
     border: 1px solid #555;
 }
-
 QGroupBox QCheckBox::indicator:checked, QGroupBox QRadioButton::indicator:checked {
     background-color: #4CAF50; /* Green */
 }
-
 QGroupBox QCheckBox::indicator:unchecked, QGroupBox QRadioButton::indicator:unchecked {
     background-color: #F44336; /* Red */
 }
-
 
 /* Big Save Button */
 #saveButton {
@@ -60,7 +80,71 @@ QGroupBox QCheckBox::indicator:unchecked, QGroupBox QRadioButton::indicator:unch
     font-weight: bold;
     background-color: #4CAF50; /* Green */
     color: white;
+    border: 1px solid #3a3a3a;
+    border-radius: 10px;
 }
-#saveButton:hover {
-    background-color: #45a049;
+#saveButton:hover { background-color: #45a049; }
+
+/* =========================
+   Semantic button variants
+   ========================= */
+
+/* Accent (primary) */
+QPushButton[buttonType="accent"] {
+    background-color: #3b82f6;   /* blue */
+    border-color: #3b82f6;
+    color: #ffffff;
 }
+QPushButton[buttonType="accent"]:hover { background-color: #2563eb; }
+QPushButton[buttonType="accent"]:pressed { background-color: #1d4ed8; }
+QPushButton[buttonType="accent"]:disabled {
+    background-color: #2b4e94; color: #cfe2ff; border-color: #2b4e94;
+}
+
+/* Success (Activate) */
+QPushButton[buttonType="success"] {
+    background-color: #22c55e;   /* green */
+    border-color: #22c55e;
+    color: #0b140c;
+}
+QPushButton[buttonType="success"]:hover { background-color: #16a34a; }
+QPushButton[buttonType="success"]:pressed { background-color: #15803d; }
+
+/* Danger (Disable) */
+QPushButton[buttonType="danger"] {
+    background-color: #ef4444;   /* red */
+    border-color: #ef4444;
+    color: #ffffff;
+}
+QPushButton[buttonType="danger"]:hover { background-color: #dc2626; }
+QPushButton[buttonType="danger"]:pressed { background-color: #b91c1c; }
+
+/* Warning (Prefer Community Airports) */
+QPushButton[buttonType="warning"] {
+    background-color: #f59e0b;   /* amber */
+    border-color: #f59e0b;
+    color: #1a1a1a;
+}
+QPushButton[buttonType="warning"]:hover { background-color: #d97706; }
+QPushButton[buttonType="warning"]:pressed { background-color: #b45309; }
+
+/* Same variants for toolbar toolbuttons (from QActions) */
+QToolBar QToolButton[buttonType="accent"] {
+    background-color: #3b82f6; color: #fff; border: 1px solid #3b82f6;
+}
+QToolBar QToolButton[buttonType="accent"]:hover { background-color: #2563eb; }
+
+QToolBar QToolButton[buttonType="success"] {
+    background-color: #22c55e; color: #0b140c; border: 1px solid #22c55e;
+}
+QToolBar QToolButton[buttonType="success"]:hover { background-color: #16a34a; }
+
+QToolBar QToolButton[buttonType="danger"] {
+    background-color: #ef4444; color: #fff; border: 1px solid #ef4444;
+}
+QToolBar QToolButton[buttonType="danger"]:hover { background-color: #dc2626; }
+
+QToolBar QToolButton[buttonType="warning"] {
+    background-color: #f59e0b; color: #1a1a1a; border: 1px solid #f59e0b;
+}
+QToolBar QToolButton[buttonType="warning"]:hover { background-color: #d97706; }

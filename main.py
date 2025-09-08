@@ -1,8 +1,16 @@
 import sys
-from pathlib import Path
 import json
+import re
+from pathlib import Path
 
-from PySide6.QtGui import QGuiApplication, QAction, QPalette, QColor, QIcon, QPixmap
+from PySide6.QtGui import (
+    QGuiApplication,
+    QAction,
+    QPalette,
+    QColor,
+    QIcon,
+    QPixmap,
+)
 from PySide6.QtCore import (
     Qt,
     QSortFilterProxyModel,
@@ -15,6 +23,7 @@ from PySide6.QtCore import (
     QItemSelectionModel,
 )
 from PySide6.QtWidgets import (
+    QStyleOptionViewItem,
     QApplication,
     QMainWindow,
     QFileDialog,
@@ -34,9 +43,8 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QAbstractItemView,
     QStyledItemDelegate,
-    QStyleOptionViewItem,
     QStyle,
-    QMenu,  # <<< added
+    QMenu,
     QSplashScreen,
 )
 
@@ -57,8 +65,13 @@ from categorizer import load_rules, save_rules
 from settings import SettingsDialog, AppSettings
 from thumbnails import ThumbCache
 
-# If you have FooterBar in your project, keep this import. Otherwise, remove it.
-from footer import FooterBar  # noqa: F401
+# Optional footer if present in your repo
+try:
+    from footer import FooterBar  # noqa: F401
+except Exception:
+    FooterBar = None
+
+# ----------------------- Constants -----------------------
 
 CATEGORIES_ALL = [
     "All",
@@ -73,13 +86,67 @@ CATEGORIES_ALL = [
 ]
 STATUS_ALL = ["All", STATUS_ACTIVATED, STATUS_USERDISABLED, STATUS_SYSTEMDISABLED]
 
-STATUS_COL = 2  # column index for Status
+# Column indices in the model/proxy
+THUMB_COL = 0
+NAME_COL = 1
+STATUS_COL = 2
+CATEGORY_COL = 3
 VENDOR_COL = 4
 SIM_COL = 5
+
 STATUS_COL_WIDTH = 120  # keep Status column stable
 
+# ---------------- ICAO/LID parsing helpers ----------------
+# Examples:
+#   fs24-asobo-airport-egll-heathrow  -> EGLL
+#   fs20-orbx-airport-egnt-newcastle  -> EGNT
+#   fs24-asobo-airport-c53-lowerloon  -> C53
+#   fs24-asobo-airport-wx53-...       -> WX53
+RX_AFTER_AIRPORT = re.compile(
+    r"(?i)\b(?:airport|airfield|aerodrome|heliport|seaplane[-_ ]base)[-_ ]+([a-z0-9]{3,5})\b"
+)
+RX_STRICT_4 = re.compile(r"^[A-Z][A-Z0-9]{3}$")  # prefer 4-char starting with a letter
+RX_LEN_3_TO_5 = re.compile(r"^[A-Z0-9]{3,5}$")  # allow FAA LIDs (C53, 1S2, etc.)
 
-# ---------- UI helpers ----------
+
+def parse_airport_code_from_name(pkg_name: str) -> str | None:
+    if not pkg_name:
+        return None
+
+    # 1) keyword followed by code
+    m = RX_AFTER_AIRPORT.search(pkg_name)
+    if m:
+        cand = m.group(1).upper()
+        if RX_STRICT_4.match(cand) or RX_LEN_3_TO_5.match(cand):
+            return cand
+
+    # 2) Token scan after the keyword
+    parts = re.split(r"[-_. ]+", (pkg_name or "").lower())
+    keywords = {
+        "airport",
+        "airfield",
+        "aerodrome",
+        "heliport",
+        "seaplane",
+        "seaplane-base",
+    }
+    try:
+        idx = next(i for i, t in enumerate(parts) if t in keywords)
+    except StopIteration:
+        return None
+
+    window = [p.upper() for p in parts[idx + 1 : idx + 5]]
+
+    for tok in window:
+        if RX_STRICT_4.match(tok):
+            return tok
+    for tok in window:
+        if RX_LEN_3_TO_5.match(tok):
+            return tok
+    return None
+
+
+# ------------------------- UI helpers -------------------------
 
 
 class ElidedLabel(QLabel):
@@ -102,7 +169,7 @@ class ElidedLabel(QLabel):
         self.setText(fm.elidedText(self._full, self._mode, self.width()))
 
 
-# ---------- Filtering proxy (with stronger FS20 community guard) ----------
+# ----- Filtering proxy (with strong FS20 community guard) -----
 
 
 class FilterProxy(QSortFilterProxyModel):
@@ -148,21 +215,19 @@ class FilterProxy(QSortFilterProxyModel):
         if not m:
             return True
 
-        # column indices: 0 thumb, 1 name, 2 status, 3 category, 4 vendor, 5 sim
-        idx_name = m.index(source_row, 1, source_parent)
+        idx_name = m.index(source_row, NAME_COL, source_parent)
         idx_status = m.index(source_row, STATUS_COL, source_parent)
-        idx_category = m.index(source_row, 3, source_parent)
+        idx_category = m.index(source_row, CATEGORY_COL, source_parent)
         idx_sim = m.index(source_row, SIM_COL, source_parent)
 
         name = (m.data(idx_name, Qt.DisplayRole) or "").strip()
         status = (m.data(idx_status, Qt.DisplayRole) or "").strip()
         category = (m.data(idx_category, Qt.DisplayRole) or "").strip()
-        sim = (m.data(idx_sim, Qt.DisplayRole) or "").strip().lower()
 
         row_obj = m._rows[source_row]
         name_lc = name.lower()
 
-        # 🚫 Strong guard: hide FS2020 community everywhere
+        # 🚫 Hide FS2020 community everywhere
         if "communityfs20-" in name_lc:
             return False
         if row_obj.source == "community" and row_obj.sim == "fs20":
@@ -180,26 +245,26 @@ class FilterProxy(QSortFilterProxyModel):
         if self.status != "All" and status != self.status:
             return False
 
-        # Search (name or vendor, regex ok)
+        # Search across name/vendor
         pat = self.search_re.pattern()
         if pat:
+            vendor = getattr(row_obj, "vendor", "") or ""
             if not (
                 self.search_re.match(name).hasMatch()
-                or self.search_re.match(getattr(row_obj, "vendor", "") or "").hasMatch()
+                or self.search_re.match(vendor).hasMatch()
             ):
                 return False
 
         return True
 
 
-# ---------- Mouse event filters ----------
+# --------------------- Mouse event filters ---------------------
 
 
 class StatusToggleFilter(QObject):
     """
     Intercepts mouse clicks on the table viewport.
     If the click hits the Status column, we toggle the checkbox ourselves.
-    Works on both green (Activated) and red (UserDisabled) boxes + text.
     """
 
     def __init__(
@@ -242,8 +307,7 @@ class StatusToggleFilter(QObject):
 
 class ThumbnailRefreshFilter(QObject):
     """
-    Clicking the thumbnail cell (column 0) will forget & rescan the thumbnail mapping
-    for that row. We don't consume the event so normal selection still works.
+    Clicking the thumbnail cell will forget & rescan the thumbnail mapping for that row.
     """
 
     def __init__(
@@ -262,17 +326,16 @@ class ThumbnailRefreshFilter(QObject):
     def eventFilter(self, obj, event):
         if obj is self.table.viewport() and event.type() == QEvent.MouseButtonPress:
             idx = self.table.indexAt(event.position().toPoint())
-            if idx.isValid() and idx.column() == 0:
+            if idx.isValid() and idx.column() == THUMB_COL:
                 sidx = self.proxy.mapToSource(idx)
                 self.model.refresh_thumbnails_for_rows([sidx.row()])
                 if callable(self.notify_cb):
                     self.notify_cb("Refreshing thumbnail…")
-                # Don't consume: allow selection to proceed
-                return False
+                return False  # allow normal selection
         return super().eventFilter(obj, event)
 
 
-# ---------- Delegate to style SystemDisabled rows ----------
+# ---------------- Row styling for SystemDisabled rows ----------------
 
 
 class RowStylingDelegate(QStyledItemDelegate):
@@ -280,11 +343,11 @@ class RowStylingDelegate(QStyledItemDelegate):
         super().__init__(parent)
         self.proxy = proxy
         self.model = model
-        self.bg = QColor(255, 99, 99, 60)  # light red, semi-transparent
+        self.bg = QColor(255, 99, 99, 60)  # light red wash
         self.muted_fg = QColor(255, 220, 220)
 
     def paint(self, painter, option: QStyleOptionViewItem, index):
-        # clone and strip the focus state so no dotted outline is drawn
+        # strip the dotted focus outline
         opt = QStyleOptionViewItem(option)
         opt.state &= ~QStyle.State_HasFocus
 
@@ -293,22 +356,19 @@ class RowStylingDelegate(QStyledItemDelegate):
 
         if row.status == STATUS_SYSTEMDISABLED:
             painter.save()
-
-            # keep them visually unselected + grey
+            # keep them visually unselected + grey/red wash
             opt.state &= ~QStyle.State_Selected
             painter.fillRect(opt.rect, self.bg)
-
             pal = QPalette(opt.palette)
             pal.setColor(QPalette.Text, self.muted_fg)
             opt.palette = pal
-
             super().paint(painter, opt, index)
             painter.restore()
         else:
-            super().paint(painter, opt, index)
+            super().paint(painter, option, index)
 
 
-# ---------- Main window ----------
+# --------------------------- Main window ---------------------------
 
 
 class MainWindow(QMainWindow):
@@ -333,24 +393,44 @@ class MainWindow(QMainWindow):
         self._build_toolbar()
 
         self.tabs = QTabWidget()
+
+        # "Prefer Community Airports" button in the corner of the tab bar
+        btn_pref_comm = QPushButton("Prefer Community Airports")
+        btn_pref_comm.setToolTip(
+            "Disable Official Store airports when a matching airport exists in your Community (FS2024) folder. "
+            "Community version stays active. Changes are staged until you click Save."
+        )
+        btn_pref_comm.clicked.connect(self._prefer_community_airports)
+
+        # Container to allow for right-margin
+        corner_widget = QWidget()
+        corner_layout = QHBoxLayout(corner_widget)
+        corner_layout.setContentsMargins(0, 0, 10, 0)  # Add 10px margin to the right
+        corner_layout.addWidget(btn_pref_comm)
+        self.tabs.setCornerWidget(corner_widget, corner=Qt.TopRightCorner)
+
         main_layout.addWidget(self.tabs)
 
-        # Optional footer (only if FooterBar exists in your project)
-        try:
-            links_cfg = self.config.get("links") or {
-                "Discord": "https://discord.gg/ErQduaBqAg",
-                "GitHub": "https://github.com/CraigyBabyJ/msfs-content-wrangler",
-                "TikTok": "https://tiktok.com/@craigybabyj_new",
-                "Website": "https://craigybabyj.itch.io/",
-                "Donate": "https://paypal.me/CJames440?locale.x=en_GB&country.x=GB",
-            }
-            icons_dir = Path(__file__).parent / "icons"
-            self.footer = FooterBar(
-                "CraigyBabyJ ✈️ #flywithcraig", links_cfg, icons_dir, self.save_changes
-            )
-            main_layout.addWidget(self.footer)
-        except Exception:
-            pass
+        # Optional footer
+        if FooterBar:
+            try:
+                links_cfg = self.config.get("links") or {
+                    "Discord": "https://discord.gg/ErQduaBqAg",
+                    "GitHub": "https://github.com/CraigyBabyJ/msfs-content-wrangler",
+                    "TikTok": "https://tiktok.com/@craigybabyj_new",
+                    "Website": "https://craigybabyj.itch.io/",
+                    "Donate": "https://paypal.me/CJames440?locale.x=en_GB&country.x=GB",
+                }
+                icons_dir = Path(__file__).parent / "icons"
+                self.footer = FooterBar(
+                    "CraigyBabyJ ✈️ #flywithcraig",
+                    links_cfg,
+                    icons_dir,
+                    self.save_changes,
+                )
+                main_layout.addWidget(self.footer)
+            except Exception:
+                pass
 
         self.setCentralWidget(main_widget)
 
@@ -420,21 +500,25 @@ class MainWindow(QMainWindow):
         self.addToolBar(tb)
 
         btn_switch = QAction("Switch Content.xml…", self)
+        btn_switch.setToolTip("Switch to a different Content.xml file from a list of auto-detected files.")
         btn_switch.triggered.connect(self._switch_content_xml)
         tb.addAction(btn_switch)
         tb.addSeparator()
 
         btn_change = QAction("Open…", self)
+        btn_change.setToolTip("Open a specific Content.xml file.")
         btn_change.triggered.connect(self.choose_file)
         tb.addAction(btn_change)
         tb.addSeparator()
 
         act_reload = QAction("Reload", self)
+        act_reload.setToolTip("Reload the current Content.xml file.")
         act_reload.triggered.connect(lambda: self.load_content_file(initial=False))
         tb.addAction(act_reload)
         tb.addSeparator()
 
         act_settings = QAction("Settings…", self)
+        act_settings.setToolTip("Open the application settings.")
         act_settings.triggered.connect(self.open_settings)
         tb.addAction(act_settings)
 
@@ -497,18 +581,19 @@ class MainWindow(QMainWindow):
     def _build_tabs(self):
         self.tabs.clear()
         tabs_spec = [
-            ("Official Store (FS2024)", "official", "fs24"),
-            ("Community Folder (FS2024)", "community", "fs24"),
+            ("Official Store (FS2024)", "official", "fs24", "Packages installed from the official Microsoft Flight Simulator 2024 marketplace."),
+            ("Community Folder (FS2024)", "community", "fs24", "Packages installed in your Microsoft Flight Simulator 2024 Community folder."),
             None,  # separator
-            ("Official Store (FS2020)", "official", "fs20"),
+            ("Official Store (FS2020)", "official", "fs20", "Packages installed from the official Microsoft Flight Simulator 2020 marketplace."),
         ]
         for spec in tabs_spec:
             if spec is None:
                 idx = self.tabs.addTab(QWidget(), " ")
                 self.tabs.setTabEnabled(idx, False)
                 continue
-            title, source, sim = spec
-            self.tabs.addTab(self._build_tab_page(title, source, sim), title)
+            title, source, sim, tooltip = spec
+            idx = self.tabs.addTab(self._build_tab_page(title, source, sim), title)
+            self.tabs.setTabToolTip(idx, tooltip)
         self.status.showMessage(f"Loaded {self.model.rowCount()} packages.", 5000)
 
     def _warm_visible_thumbnails(self, view: QTableView):
@@ -527,7 +612,7 @@ class MainWindow(QMainWindow):
             bottom = min(model.rowCount() - 1, 30)
 
         for r in range(top, bottom + 1):
-            proxy_index = model.index(r, 0)
+            proxy_index = model.index(r, THUMB_COL)
             source_index = model.mapToSource(proxy_index)
             _ = source_model.data(source_index, Qt.DecorationRole)
 
@@ -572,10 +657,11 @@ class MainWindow(QMainWindow):
         ctrl.addWidget(cb_status, 1)
 
         btn_act = QPushButton("Activate Selected")
+        btn_act.setToolTip("Activate the selected packages.")
         btn_dis = QPushButton("Disable Selected")
+        btn_dis.setToolTip("Deactivate the selected packages.")
         ctrl.addWidget(btn_act)
         ctrl.addWidget(btn_dis)
-
         v.addLayout(ctrl)
 
         # Table
@@ -584,12 +670,13 @@ class MainWindow(QMainWindow):
         table.setSortingEnabled(True)
         table.setSelectionBehavior(QTableView.SelectRows)
         table.setSelectionMode(QTableView.ExtendedSelection)
-
-        # We toggle via event filter (avoids double-toggle).
-        table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        table.setEditTriggers(
+            QAbstractItemView.NoEditTriggers
+        )  # toggle via event filter
 
         show_thumbnails = self.config.get("show_thumbnails", False)
-        table.setColumnHidden(0, not show_thumbnails)
+        table.setColumnHidden(THUMB_COL, not show_thumbnails)
+        table.setColumnHidden(SIM_COL, True)
         if show_thumbnails:
             table.setIconSize(QSize(self.model.THUMB_WIDTH, self.model.THUMB_HEIGHT))
             table.verticalHeader().setDefaultSectionSize(self.model.THUMB_HEIGHT + 6)
@@ -601,19 +688,20 @@ class MainWindow(QMainWindow):
             table.verticalHeader().setDefaultSectionSize(24)
 
         header = table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Fixed)  # Thumbnail column (fixed)
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # Name
-        header.setSectionResizeMode(STATUS_COL, QHeaderView.Fixed)  # fixed status width
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)  # Category
-        header.setSectionResizeMode(VENDOR_COL, QHeaderView.Interactive)  # Vendor
+        header.setSectionResizeMode(THUMB_COL, QHeaderView.Fixed)
+        header.setSectionResizeMode(NAME_COL, QHeaderView.Stretch)
+        header.setSectionResizeMode(STATUS_COL, QHeaderView.Fixed)
+        header.setSectionResizeMode(CATEGORY_COL, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(VENDOR_COL, QHeaderView.Interactive)
         header.setSectionResizeMode(SIM_COL, QHeaderView.ResizeToContents)
 
-        # Make the thumbnail column wide enough for the preview (kept wide)
+        # Thumbnail column width
         if show_thumbnails:
-            thumb_w = getattr(self.model, "THUMB_WIDTH", 160)
-            table.setColumnWidth(0, thumb_w + 40)  # 200px by default (no clip)
+            table.setColumnWidth(
+                THUMB_COL, getattr(self.model, "THUMB_WIDTH", 160) + 40
+            )
         else:
-            table.setColumnWidth(0, 24)  # tiny when hidden
+            table.setColumnWidth(THUMB_COL, 24)
 
         table.setColumnWidth(VENDOR_COL, 150)
         table.setColumnWidth(STATUS_COL, STATUS_COL_WIDTH)
@@ -623,27 +711,26 @@ class MainWindow(QMainWindow):
         # Warm thumbs for visible rows
         QTimer.singleShot(0, lambda: self._warm_visible_thumbnails(table))
 
-        # Install the event filters
+        # Event filters: status toggle + thumbnail refresh
         filter_obj = StatusToggleFilter(
             table, proxy, self.model, lambda: update_count()
         )
         table.viewport().installEventFilter(filter_obj)
-        table._status_toggle_filter = filter_obj  # keep reference
+        table._status_toggle_filter = filter_obj
 
         thumb_filter = ThumbnailRefreshFilter(
             table, proxy, self.model, notify_cb=update_count
         )
         table.viewport().installEventFilter(thumb_filter)
-        table._thumb_refresh_filter = thumb_filter  # keep reference
+        table._thumb_refresh_filter = thumb_filter
 
-        # Delegate: keep SystemDisabled rows visually grey at all times
+        # Delegate for SystemDisabled rows
         table.setItemDelegate(RowStylingDelegate(proxy, self.model, table))
 
         # --- Keep SystemDisabled rows unselected so they stay grey in multi-selects ---
         sel_model = table.selectionModel()
 
         def _prune_disabled_selection(selected, deselected):
-            # avoid recursive calls
             if getattr(table, "_pruning_disabled_sel", False):
                 return
             table._pruning_disabled_sel = True
@@ -703,10 +790,117 @@ class MainWindow(QMainWindow):
 
         return page
 
+    # ----- Prefer Community Airports (disable store duplicates) -----
+
+    def _prefer_community_airports(self):
+        """
+        Disable Official (FS2024 + FS2020) airports that have a Community (FS2024)
+        airport with the same ICAO/LID inferred from package name.
+
+        Only affects Official rows that are currently ACTIVATED.
+        Shows a confirmation dialog before applying.
+        """
+        if not self.model:
+            return
+
+        rows = self.model.get_rows()
+        if not rows:
+            return
+
+        # Collect community FS24 airport codes
+        community_codes: set[str] = set()
+        for r in rows:
+            if getattr(r, "category", "") != "Airport":
+                continue
+            if getattr(r, "source", "") != "community":
+                continue
+            if getattr(r, "sim", "") != "fs24":
+                continue
+            code = parse_airport_code_from_name(getattr(r, "name", "") or "")
+            if code:
+                community_codes.add(code)
+
+        if not community_codes:
+            QMessageBox.information(
+                self,
+                "Prefer Community Airports",
+                "No Community (FS2024) airports detected.",
+            )
+            return
+
+        # Find Official (FS24 + FS20) airports to disable, but only if currently Activated
+        to_disable = []  # (row_idx, code, pkg_name)
+        for idx, r in enumerate(rows):
+            if getattr(r, "category", "") != "Airport":
+                continue
+            if getattr(r, "source", "") != "official":
+                continue
+            if getattr(r, "sim", "") not in ("fs24", "fs20"):
+                continue
+            status = getattr(r, "status", "")
+            if status in (STATUS_SYSTEMDISABLED, STATUS_USERDISABLED):
+                continue
+            code = parse_airport_code_from_name(getattr(r, "name", "") or "")
+            if code and code in community_codes and status == STATUS_ACTIVATED:
+                to_disable.append((idx, code, getattr(r, "name", "")))
+
+        if not to_disable:
+            self.status.showMessage("Prefer Community: nothing to do.", 4000)
+            QMessageBox.information(
+                self,
+                "Prefer Community Airports",
+                "No new store duplicates to disable.\n"
+                "Either none were found, or they’re already disabled.",
+            )
+            return
+
+        # Confirm with user (preview)
+        sample_lines = "\n".join(
+            f"  • {code} — {name}" for _, code, name in to_disable[:12]
+        )
+        more = "" if len(to_disable) <= 12 else f"\n  …and {len(to_disable)-12} more."
+        msg = (
+            f"This will disable {len(to_disable)} Official Store airport(s) that also exists in you Community Folder.\n\n"
+            f"To be disabled:\n{sample_lines}{more}\n\n"
+            "Community versions remain active.\n\n"
+            "Proceed?"
+        )
+        if (
+            QMessageBox.question(
+                self,
+                "Prefer Community Airports",
+                msg,
+                QMessageBox.Yes | QMessageBox.Cancel,
+                QMessageBox.Yes,
+            )
+            != QMessageBox.Yes
+        ):
+            self.status.showMessage("Prefer Community: cancelled.", 3000)
+            return
+
+        # Apply changes (toggle to UserDisabled)
+        changed = 0
+        for row_idx, _, _ in to_disable:
+            self.model.setData(
+                self.model.index(row_idx, STATUS_COL),
+                Qt.Unchecked,
+                role=Qt.CheckStateRole,
+            )
+            changed += 1
+
+        if changed:
+            self.status.showMessage(
+                f"Prefer Community: disabled {changed} store duplicate(s). "
+                "Remember to click Save to write Content.xml.",
+                7000,
+            )
+
     # ----- context menu: refresh thumbnails -----
+
     def _on_table_menu(self, pos, table, proxy, title):
         menu = QMenu(table)
         act_refresh = QAction("Refresh thumbnail(s)", menu)
+        act_refresh.setToolTip("Refresh thumbnails for selected packages.")
         act_refresh.triggered.connect(
             lambda: self._refresh_thumbs_selection(table, proxy, title)
         )
@@ -791,7 +985,7 @@ class MainWindow(QMainWindow):
             self.current_xml.as_posix() if self.current_xml else "",
             self,
         )
-        # Connect the "clear thumbnail cache" action
+        # optional: connect “clear cache” signal if your dialog exposes it
         try:
             dlg.request_clear_thumb_cache.connect(self._clear_thumb_cache)
         except Exception:
@@ -831,15 +1025,13 @@ class MainWindow(QMainWindow):
             self.restoreState(state)
 
     def closeEvent(self, e):
-        if self.model and hasattr(self.model, "shutdown"):
-            self.model.shutdown()
         s = QSettings("CraigyBabyJ", "MSFS-Content-Wrangler")
         s.setValue("window/geometry", self.saveGeometry())
         s.setValue("window/state", self.saveState())
         super().closeEvent(e)
 
 
-# ---------- entry ----------
+# ----------------------------- entry -----------------------------
 
 if __name__ == "__main__":
     # Windows: give the app its own ID so the taskbar uses our icon + groups correctly
@@ -848,15 +1040,16 @@ if __name__ == "__main__":
             import ctypes
 
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                "CraigyBabyJ.MSFSContentWrangler"  # any stable, unique string
+                "CraigyBabyJ.MSFSContentWrangler"
             )
         except Exception:
             pass
 
-    # crisp HiDPI scaling
+    # MUST be called before creating QApplication (and only once in the whole process)
     QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
         Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
     )
+
     app = QApplication(sys.argv)
 
     # App/window icon
@@ -868,26 +1061,24 @@ if __name__ == "__main__":
     elif png.exists():
         app.setWindowIcon(QIcon(str(png)))
 
-    # Splash screen
+    # Optional splash (if you want it)
     splash = None
     if png.exists():
-        splash_pix = QPixmap(str(png)).scaled(
-            256, 256, Qt.KeepAspectRatio, Qt.SmoothTransformation
-        )
-        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
-        splash.setMask(splash_pix.mask())
-
-        font = splash.font()
-        font.setPointSize(14)
-        splash.setFont(font)
-
-        splash.show()
-        splash.showMessage(
-            "Loading, please wait...",
-            Qt.AlignBottom | Qt.AlignCenter,
-            QColor(230, 230, 230),
-        )
-        app.processEvents()
+        try:
+            splash_pix = QPixmap(str(png)).scaled(
+                256, 256, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            )
+            splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+            splash.setMask(splash_pix.mask())
+            splash.show()
+            splash.showMessage(
+                "Loading, please wait…",
+                Qt.AlignBottom | Qt.AlignCenter,
+                QColor(230, 230, 230),
+            )
+            app.processEvents()
+        except Exception:
+            splash = None
 
     win = MainWindow()
     try:
