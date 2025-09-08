@@ -1,119 +1,121 @@
-# msfs-content-wrangler
-Content file editor for MFS2024
-MSFS Content Wrangler
+# MSFS Content Wrangler
 
-A fast, friendly desktop tool to review and toggle enable/disable Microsoft Flight Simulator content entries in Content.xml — with smart thumbnail discovery and safe backups. Built for MSFS 2024.
+## ✈️ Your Essential Tool for Microsoft Flight Simulator Content Management
 
+The MSFS Content Wrangler is a fast, user-friendly desktop application designed to help you effortlessly manage your Microsoft Flight Simulator (MSFS) content. **Please note: This tool is currently suitable only for the Microsoft Store (Xbox) version of MSFS.** It provides a clear overview of your installed packages, allowing you to easily activate, disable, and organize your add-ons.
 
-✨ What it does
+---
 
-Loads Content.xml and shows your installed entries in a clean table with:
+### ✨ Key Features at a Glance
 
-Name, Status, Category, Vendor, Sim (FS24/FS20), and an optional Thumbnail.
-Tabs for Official (FS2024), Community (FS2024), and Official (FS2020).
-Filter & find fast: Search by name/vendor (regex supported), filter by Category & Status, and sort any column.
+*   **Comprehensive Content Overview:**
+    *   Loads your `Content.xml` file and displays all installed entries in a clean, sortable table.
+    *   View essential details: Name, Status, Category, Vendor, and an optional Thumbnail.
+    *   Dedicated tabs for:
+        *   **Official Store (MSFS 2024):** Content from the official marketplace.
+        *   **Community Folder (MSFS 2024):** Your community-installed add-ons.
+        *   **Official Store (MSFS 2020):** Legacy content from the MSFS 2020 marketplace.
 
-Toggle status with a click:
-Activated ↔ UserDisabled via the Status column or Activate/Disable Selected buttons.
-SystemDisabled entries are read-only and visually muted.
-Shift-click and Ctrl/Cmd-click for multi-select (SystemDisabled rows won’t be included).
+*   **Effortless Package Management:**
+    *   **Toggle Status:** Easily switch packages between `Activated` and `UserDisabled` with a single click on the Status column, or use the "Activate Selected" and "Disable Selected" buttons for batch operations.
+    *   `SystemDisabled` entries are read-only and visually muted, ensuring you don't accidentally modify critical files.
+    *   **Multi-Selection:** Use Shift-click and Ctrl/Cmd-click for convenient multi-selection (SystemDisabled rows are automatically excluded).
 
-Safe save with automatic backup:
-Creates a timestamped backup of Content.xml before writing.
-Optionally removes legacy FS2020 Community entries on save (configurable).
+*   **Smart Filtering & Search:**
+    *   Quickly find what you need: Search by name or vendor (supports regular expressions!), and filter by Category or Status.
+    *   Sort any column to organize your view.
 
-Thumbnails without copying files:
-Discovers thumbnail images in place (no duplication) and caches the paths in cache/thumbnails.json.
-Discovery order: layout.json → ContentInfo/thumbnail* → ContentInfo/screenshot* → any image under ContentInfo/ → (for aircraft) SimObjects/Airplanes/**/thumbnail*.
-Refresh per row (click the thumbnail cell or right-click “Refresh thumbnail(s)”) or Clear cache in Settings.
-Shows a polished “Not Found” tile if scanned and no image exists.
+*   **Intelligent Thumbnail Discovery:**
+    *   The Wrangler discovers and displays package thumbnails directly from their installed locations, without duplicating files.
+    *   Thumbnails are cached for fast loading.
+    *   **Refresh Options:**
+        *   Click a thumbnail cell to re-scan that specific package's thumbnail.
+        *   Right-click the table and select "Refresh thumbnail(s)" to re-scan all selected rows.
+        *   Clear the entire thumbnail cache via `Settings` to rebuild it from scratch.
+    *   Shows a clear "Not Found" tile if no image is detected.
 
-Quality of life:
-Stable column widths (no jitter), clean row-selection visuals, and non-blocking background work.
+*   **Safe & Secure Operations:**
+    *   **Automatic Backups:** Every time you save changes, a timestamped backup of your `Content.xml` is automatically created, ensuring you can always revert if needed.
+    *   **Optional Cleanup:** Configure the tool to optionally remove legacy MSFS 2020 Community entries during save, helping to keep your `Content.xml` tidy.
 
-🧩 How it works (overview)
-Content discovery
+*   **New! Prefer Community Airports:**
+    *   This powerful feature helps you manage duplicate airport entries.
+    *   Click the "Prefer Community Airports" button to automatically disable Official Store airports (both MSFS 2024 and MSFS 2020) if a matching airport exists in your MSFS 2024 Community Folder.
+    *   Community versions remain active, and changes are staged until you click "Save".
 
-On first launch, the app searches typical MSFS LocalCache locations and profiles for Content.xml. You can switch files any time (File → Open… or Switch Content.xml…).
+*   **Quality of Life Enhancements:**
+    *   Stable column widths for a consistent view.
+    *   Clean row-selection visuals.
+    *   Non-blocking background processes keep the UI responsive.
 
-The table is a model/view backed by PackageRow objects, one per entry in Content.xml.
+---
 
-Tabs are enforced by a filter layer:
-Official FS2024 Store → entries marked as official for FS24
-Community Folder FS2024 → FS24 community
-Official FS2020 Store  → official FS20 content that are enabled if compatable
+### 🚀 Quick Start
 
+1.  **Launch the App:** The Wrangler will attempt to auto-detect your `Content.xml` file.
+2.  **Select Content.xml:** If not auto-detected, use `File` → `Open…` or `Switch Content.xml…` to manually select it.
+3.  **Explore Tabs:** Navigate through the "Official Store (MSFS 2024)", "Community Folder (MSFS 2024)", and "Official Store (MSFS 2020)" tabs.
+4.  **Manage Packages:**
+    *   Click the `Status` column to toggle individual packages.
+    *   Use `Activate Selected` or `Disable Selected` for multiple packages.
+    *   Try the new `Prefer Community Airports` button to streamline your airport add-ons.
+5.  **Save Changes:** Click the `Save` button to apply your modifications. A backup will be created automatically.
 
-Thumbnails (map-only cache)
-The app never copies or resizes images; it stores paths in cache/thumbnails.json:
-Keyed by package name; values include the resolved image path and mtime for quick validation.
-When the thumbnail column is visible, discovery runs asynchronously (thread-pool) to keep the UI responsive.
+---
 
-You can:
+### 🧩 How It Works (Technical Overview)
 
-Click the thumb cell to re-scan that one row.
-Right-click → Refresh thumbnail(s) to re-scan all selected rows.
-Settings → Clear thumbnail cache to wipe the DB and refresh organically as you scroll.
-Status toggling
-Click the Status column (green/red tick) to toggle Activated ↔ UserDisabled.
-Use Activate Selected / Disable Selected for batch operations.
-SystemDisabled entries are always greyed and excluded from bulk changes.
+*   **Content Discovery:** On first launch, the app scans common MSFS LocalCache locations for `Content.xml`. You can switch files anytime. The table is backed by `PackageRow` objects, representing each entry.
+*   **Tab Filtering:** Tabs are enforced by a filter layer that displays content based on `source` (official/community) and `sim` (fs24/fs20) tags.
+*   **Thumbnails (Map-Only Cache):** The app never copies or resizes images. It stores paths in `cache/thumbnails.json`, keyed by package name, including resolved image paths and modification times for validation. Thumbnail discovery runs asynchronously to maintain UI responsiveness.
+*   **Status Toggling:** Clicking the Status column or using bulk buttons updates the package status. `SystemDisabled` entries are protected.
+*   **Save & Backup:** Before writing, a timestamped backup of `Content.xml` is created. The "Clean legacy FS20 mods" option (configurable in Settings) removes old MSFS 2020 Community references during save.
 
-Save & backup
-Before writing, the app creates a timestamped backup of the current Content.xml next to the file.
-If Clean legacy FS20 mods is enabled (recommended), FS2020 Community references are removed during save.
+---
 
+### 🧪 Power User Notes
 
-🧭 Usage
+*   **Regex Search:** The search bar supports regular expressions for precise filtering across name and vendor fields.
+*   **Selection Behavior:** Shift-click for range selection; Ctrl/Cmd-click to add/remove individual items. `SystemDisabled` rows will not remain selected in mixed groups.
+*   **Performance:** Thumbnail discovery is threaded and throttled, and the cache prevents redundant scanning on subsequent launches.
+*   **Safety:** Only `Content.xml` is modified; no package folders are touched. Backups are always created.
+*   **Right-click Menu:** Provides quick access to "Refresh thumbnail(s)" for selected rows.
 
-Start the app – it will try to auto-detect Content.xml; otherwise use Open… or Switch Content.xml….
-Pick a tab (Official FS2024, Community FS2024, Official FS2020).
-Filter/search (Category/Status dropdowns, search box for name or vendor).
-Toggle status by clicking the Status column or using the bulk buttons.
-(Optional) Show thumbnails – enable in Settings → Appearance.
-Click a thumbnail cell to force a refresh.
-Right-click the table → Refresh thumbnail(s) to batch refresh.
-Settings → Clear thumbnail cache to rebuild from scratch.
-Save – creates a backup automatically; optionally cleans FS2020 community refs.
+---
 
-🧪 Power user notes
+### 🐞 Troubleshooting
 
-Regex search covers name and vendor fields.
-Selection behavior: Shift-click to select ranges; Ctrl/Cmd-click to add/remove; SystemDisabled rows won’t remain selected in mixed groups.
-Performance: thumbnail discovery is threaded and throttled; the cache prevents re-scanning on each launch.
+*   **No thumbnails appear:**
+    *   Ensure `Settings` → `Appearance` → `Show thumbnails` is enabled.
+    *   Use `Clear thumbnail cache` and scroll; rows will be re-scanned.
+    *   Verify packages contain `ContentInfo/thumbnail*.{png|jpg|jpeg|webp}` or `layout.json` references.
+*   **"Permission denied" when saving thumbnail cache:**
+    *   Your antivirus or another process might be locking `cache/thumbnails.json`. Add an exclusion for the app folder.
+*   **`Content.xml` not found:**
+    *   Manually open it via `File` → `Open…` and select the correct profile’s `Content.xml`.
+*   **MSFS 2020 Community items are missing:**
+    *   By design, this tool hides MSFS 2020 Community entries to prevent cross-sim confusion.
+    *   If `Clean legacy FS20 mods` is enabled, these references are removed on save.
 
-Safety: only Content.xml is modified; no package folders are touched. Backups are always created.
-Right-click menu: quick access to Refresh thumbnail(s) on selected rows.
+---
 
-🐞 Troubleshooting
+### 🤝 Contributing
 
-No thumbnails appear
-Ensure Settings → Appearance → Show thumbnails is enabled.
-Use Clear thumbnail cache and scroll — rows will be re-scanned.
-Check that packages contain a ContentInfo/thumbnail*.{png|jpg|jpeg|webp} or layout.json references.
-“Permission denied” when saving thumbnail cache
-Antivirus or another process may lock cache/thumbnails.json. Add an exclusion for the app folder.
-Content.xml not found
-Open manually (File → Open…) and select the correct profile’s Content.xml.
-FS2020 Community items are missing
-That’s by design. This tool hides FS2020 Community entries to avoid cross-sim confusion.
-If Clean legacy FS20 mods is enabled, those refs are removed on save.
+PRs and issues are welcome! If you're filing a bug, please include:
+*   Whether MSFS 2024/2020 are installed and from which store (MS Store/Steam)
+*   `Content.xml` location
+*   Steps to reproduce
 
+---
 
-🤝 Contributing
+### 📄 License
 
-PRs and issues are welcome! If you’re filing a bug, please include:
-Whether MSFS 2024/2020 are installed and from which store (MS Store/Steam)
-Content.xml location 
-Steps to reproduce
+MIT. See [LICENSE](LICENSE)
 
-📄 License
+---
 
-MIT. See LICENSE
-
-🙏 Credits
+### 🙏 Credits
 
 Built with ❤️ by @CraigyBabyJ and contributors.
-If you need this tweaked (tone, badges, logo, screenshots), tell me the vibe and I’ll tailor it.
 
-Not affiliated with Microsoft, Asobo Studio, or any add-on vendor. All product names, logos, and brands are property of their respective owners.
+*Not affiliated with Microsoft, Asobo Studio, or any add-on vendor. All product names, logos, and brands are property of their respective owners.*
