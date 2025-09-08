@@ -1,5 +1,13 @@
 # MSFS Content Wrangler
 
+
+## Screenshots
+
+| Main window | Prefer Community Airports | Settings & thumbnails |
+|---|---|---|
+| <img src="assets/screenshots/Screenshot_1.png" alt="Main window" width="420"> | <img src="assets/screenshots/Screenshot_2.png" alt="Prefer Community Airports confirmation dialog" width="420"> | <img src="assets/screenshots/Screenshot_3.png" alt="Settings and thumbnails" width="420"> |
+
+
 ## ✈️ Your Essential Tool for Microsoft Flight Simulator Content Management
 
 The MSFS Content Wrangler is a fast, user-friendly desktop application designed to help you effortlessly manage your Microsoft Flight Simulator (MSFS) content. **Please note: This tool is currently suitable only for the Microsoft Store (Xbox) version of MSFS.** It provides a clear overview of your installed packages, allowing you to easily activate, disable, and organize your add-ons.
