@@ -97,7 +97,7 @@ class FooterBar(QWidget):
         root.addLayout(row)
 
         self.setStyleSheet("""
-        #FooterBrand { color: #e0e0e0; font-size: 14px; font-weight: 600; }
+        #FooterBrand { color: #e0e0e0; font-size: 18px; font-weight: bold; }
         QToolButton { color: #9ec7ff; } 
         QToolButton:hover { text-decoration: underline; }
         """)

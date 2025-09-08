@@ -233,6 +233,16 @@ class PackageTableModel(QAbstractTableModel):
                 )
 
     # ----- public helpers -----
+
+    def shutdown(self):
+        """Cleans up background thumbnail jobs."""
+        try:
+            self._pool.clear()
+            self._signals.ready.disconnect(self._on_thumb_ready)
+        except Exception:
+            # avoid any errors on shutdown
+            pass
+
     def refresh_thumbnails_for_rows(self, rows: list[int]):
         """Forget cached mapping & icon for these rows and re-queue discovery."""
         from thumbnails import ThumbJob

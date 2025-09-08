@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import json
 
-from PySide6.QtGui import QGuiApplication, QAction, QPalette, QColor, QIcon
+from PySide6.QtGui import QGuiApplication, QAction, QPalette, QColor, QIcon, QPixmap
 from PySide6.QtCore import (
     Qt,
     QSortFilterProxyModel,
@@ -37,6 +37,7 @@ from PySide6.QtWidgets import (
     QStyleOptionViewItem,
     QStyle,
     QMenu,  # <<< added
+    QSplashScreen,
 )
 
 from models import (
@@ -830,6 +831,8 @@ class MainWindow(QMainWindow):
             self.restoreState(state)
 
     def closeEvent(self, e):
+        if self.model and hasattr(self.model, "shutdown"):
+            self.model.shutdown()
         s = QSettings("CraigyBabyJ", "MSFS-Content-Wrangler")
         s.setValue("window/geometry", self.saveGeometry())
         s.setValue("window/state", self.saveState())
@@ -865,6 +868,27 @@ if __name__ == "__main__":
     elif png.exists():
         app.setWindowIcon(QIcon(str(png)))
 
+    # Splash screen
+    splash = None
+    if png.exists():
+        splash_pix = QPixmap(str(png)).scaled(
+            256, 256, Qt.KeepAspectRatio, Qt.SmoothTransformation
+        )
+        splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
+        splash.setMask(splash_pix.mask())
+
+        font = splash.font()
+        font.setPointSize(14)
+        splash.setFont(font)
+
+        splash.show()
+        splash.showMessage(
+            "Loading, please wait...",
+            Qt.AlignBottom | Qt.AlignCenter,
+            QColor(230, 230, 230),
+        )
+        app.processEvents()
+
     win = MainWindow()
     try:
         if ico.exists():
@@ -875,4 +899,6 @@ if __name__ == "__main__":
         pass
 
     win.show()
+    if splash:
+        splash.finish(win)
     sys.exit(app.exec())
