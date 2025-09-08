@@ -337,7 +337,7 @@ class MainWindow(QMainWindow):
         # Optional footer (only if FooterBar exists in your project)
         try:
             links_cfg = self.config.get("links") or {
-                "Discord": "https://discord.gg/YOUR_INVITE",
+                "Discord": "https://discord.gg/ErQduaBqAg",
                 "GitHub": "https://github.com/CraigyBabyJ/msfs-content-wrangler",
                 "TikTok": "https://tiktok.com/@craigybabyj_new",
                 "Website": "https://craigybabyj.itch.io/",
