@@ -43,8 +43,8 @@ The MSFS Content Wrangler is a fast, user-friendly desktop application designed 
     *   Shows a clear "Not Found" tile if no image is detected.
 
 *   **Safe & Secure Operations:**
-    *   **Automatic Backups:** Every time you save changes, a timestamped backup of your `Content.xml` is automatically created, ensuring you can always revert if needed.
-    *   **Optional Cleanup:** Configure the tool to optionally remove legacy MSFS 2020 Community entries during save, helping to keep your `Content.xml` tidy.
+*   **Backup on Save:** Before applying changes, the app creates a backup copy of your `Content.xml` (for example, `Content_backup.xml`) alongside the original so you can revert if needed.
+*   **Optional Cleanup:** Configure the tool to optionally remove legacy MSFS 2020 Community entries during save, helping to keep your `Content.xml` tidy.
 
 *   **New! Prefer Community Airports:**
     *   This powerful feature helps you manage duplicate airport entries.
@@ -62,7 +62,7 @@ The MSFS Content Wrangler is a fast, user-friendly desktop application designed 
 
 1.  **Launch the App:** The Wrangler will attempt to auto-detect your `Content.xml` file.
 2.  **Select Content.xml:** If not auto-detected, use `File` → `Open…` or `Switch Content.xml…` to manually select it.
-3.  **Explore Tabs:** Navigate through the "Official Store (MSFS 2024)", "Community Folder (MSFS 2024)", and "Official Store (MSFS 2020)" tabs.
+3.  **Explore Tabs:** Navigate through the "Official Store (FS2024)", "Community Folder (FS2024)", and "Official Store (FS2020)" tabs.
 4.  **Manage Packages:**
     *   Click the `Status` column to toggle individual packages.
     *   Use `Activate Selected` or `Disable Selected` for multiple packages.
