@@ -169,7 +169,7 @@ class ElidedLabel(QLabel):
         self.setText(fm.elidedText(self._full, self._mode, self.width()))
 
 
-# ----- Filtering proxy (with strong FS20 community guard) -----
+# ----- Filtering proxy (with strong FS20 community guard) ----- 
 
 
 class FilterProxy(QSortFilterProxyModel):
@@ -540,7 +540,9 @@ class MainWindow(QMainWindow):
             self.load_content_file(initial=False)
             self._refresh_path_label()
             if any(c.is_profile for c in cands) and not getattr(
-                cands[idx], "is_profile", False
+                cands[idx],
+                "is_profile",
+                False,
             ):
                 self.statusBar().showMessage(
                     "Heads up: a profile-scoped Content.xml also exists; the sim usually prefers that one.",
@@ -866,7 +868,7 @@ class MainWindow(QMainWindow):
             QMessageBox.information(
                 self,
                 "Prefer Community Airports",
-                "No new store duplicates to disable.\n"
+                "No new store duplicates to disable.\n" 
                 "Either none were found, or they’re already disabled.",
             )
             return
@@ -1082,16 +1084,19 @@ if __name__ == "__main__":
     splash = None
     if png.exists():
         try:
-            splash_pix = QPixmap(str(png)).scaled(
-                256, 256, Qt.KeepAspectRatio, Qt.SmoothTransformation
-            )
+            splash_pix = QPixmap(str(png))
+            max_dim = 400
+            if splash_pix.width() > max_dim or splash_pix.height() > max_dim:
+                splash_pix = splash_pix.scaled(
+                    max_dim, max_dim, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                )
             splash = QSplashScreen(splash_pix, Qt.WindowStaysOnTopHint)
             splash.setMask(splash_pix.mask())
             splash.show()
             splash.showMessage(
-                "Loading, please wait…",
+                "<p style='text-align: center; color: grey;'><b>Program loading</b></p>",
                 Qt.AlignBottom | Qt.AlignCenter,
-                QColor(230, 230, 230),
+                Qt.white,
             )
             app.processEvents()
         except Exception:
