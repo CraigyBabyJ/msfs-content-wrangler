@@ -140,7 +140,7 @@
                             Background="{DynamicResource SurfaceAltBrush}"
                             BorderThickness="0"
                             SelectionChanged="OnTabSelectionChanged">
-                    <TabItem x:Name="OfficialTab" Header="Official 24">
+                    <TabItem x:Name="OfficialTab" Header="Official Store (FS24)">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -252,7 +252,7 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem x:Name="Official20Tab" Header="Official 20">
+                    <TabItem x:Name="Official20Tab" Header="Official Store (FS20)">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -263,7 +263,7 @@
                                 <TextBox x:Name="Official20SearchBox"
                                          Width="260"
                                          Margin="0,0,10,0"
-                                         Tag="Search FS2020 packages"
+                                         Tag="Search FS20 packages"
                                          Style="{StaticResource SearchTextBoxStyle}"
                                          TextChanged="OnOfficial20FilterChanged" />
                                 <ComboBox x:Name="Official20CategoryBox"
@@ -362,7 +362,7 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem x:Name="CommunityTab" Header="Community 24">
+                    <TabItem x:Name="CommunityTab" Header="Community Folder (FS24)">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
