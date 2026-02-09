@@ -16,10 +16,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\config.json" Link="config.json">
+    <!-- These files are optional in CI/release builds; app has runtime defaults if missing. -->
+    <Content Include="..\..\config.json"
+             Link="config.json"
+             Condition="Exists('$(MSBuildProjectDirectory)\\..\\..\\config.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\rules.json" Link="rules.json">
+    <Content Include="..\..\rules.json"
+             Link="rules.json"
+             Condition="Exists('$(MSBuildProjectDirectory)\\..\\..\\rules.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Resource Include="..\..\icons\app.ico" Link="icons\app.ico" />
