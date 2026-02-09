@@ -103,7 +103,7 @@ public sealed partial class SettingsDialog : Window
         }
         if (_categories.Any(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)))
         {
-            MessageBox.Show(this, "Category already exists.", "Duplicate", MessageBoxButton.OK, MessageBoxImage.Information);
+            ShowInfo("Duplicate", "Category already exists.");
             return;
         }
         var vm = new CategoryRuleViewModel(name, new ObservableCollection<string>());
@@ -117,12 +117,8 @@ public sealed partial class SettingsDialog : Window
         {
             return;
         }
-        var ok = MessageBox.Show(this,
-            $"Are you sure you want to remove the \"{vm.Name}\" category?",
-            "Remove Category",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-        if (ok != MessageBoxResult.Yes)
+        var ok = Confirm("Remove Category", $"Are you sure you want to remove the \"{vm.Name}\" category?");
+        if (!ok)
         {
             return;
         }
@@ -199,17 +195,14 @@ public sealed partial class SettingsDialog : Window
 
     private void OnClearThumbCache(object sender, RoutedEventArgs e)
     {
-        var ok = MessageBox.Show(this,
-            "This will delete the saved thumbnail mappings.\nThey will be re-discovered as you scroll.\n\nProceed?",
-            "Clear thumbnail cache",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-        if (ok != MessageBoxResult.Yes)
+        var ok = Confirm("Clear thumbnail cache",
+            "This will delete the saved thumbnail mappings.\nThey will be re-discovered as you scroll.\n\nProceed?");
+        if (!ok)
         {
             return;
         }
         RequestClearThumbCache?.Invoke(this, EventArgs.Empty);
-        MessageBox.Show(this, "Thumbnail cache cleared.", "Cleared", MessageBoxButton.OK, MessageBoxImage.Information);
+        ShowInfo("Cleared", "Thumbnail cache cleared.");
     }
 
     private void OnOkClick(object sender, RoutedEventArgs e)
@@ -248,6 +241,24 @@ public sealed partial class SettingsDialog : Window
             Owner = this
         };
         return dialog.ShowDialog() == true ? dialog.ResponseText : null;
+    }
+
+    private void ShowInfo(string title, string message)
+    {
+        var dialog = new PromptDialog(title, message, showInputBox: false, showCancelButton: false)
+        {
+            Owner = this
+        };
+        dialog.ShowDialog();
+    }
+
+    private bool Confirm(string title, string message)
+    {
+        var dialog = new PromptDialog(title, message, showInputBox: false, showCancelButton: true)
+        {
+            Owner = this
+        };
+        return dialog.ShowDialog() == true;
     }
 }
 
