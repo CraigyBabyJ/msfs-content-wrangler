@@ -113,7 +113,7 @@
                                 CornerRadius="8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -127,7 +127,7 @@
                                         x:Name="PreferCommunityButton"
                                         Content="Prefer Community Airports"
                                         Style="{StaticResource SecondaryActionButton}"
-                                        HorizontalAlignment="Right"
+                                        Margin="24,0,0,0"
                                         Click="OnPreferCommunityAirports" />
                             </Grid>
                         </Border>
