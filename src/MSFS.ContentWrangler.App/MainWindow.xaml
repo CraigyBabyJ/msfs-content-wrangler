@@ -71,17 +71,17 @@
                                 Orientation="Horizontal"
                                 VerticalAlignment="Center"
                                 Margin="0,0,0,0">
-                        <Button Style="{StaticResource TitleBarButtonStyle}"
+                        <Button Style="{DynamicResource TitleBarButtonStyle}"
                                 shell:WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="OnMinimizeClicked">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE921;" />
                         </Button>
-                        <Button Style="{StaticResource TitleBarButtonStyle}"
+                        <Button Style="{DynamicResource TitleBarButtonStyle}"
                                 shell:WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="OnMaximizeRestoreClicked">
                             <TextBlock x:Name="MaximizeGlyph" FontFamily="Segoe MDL2 Assets" Text="&#xE922;" />
                         </Button>
-                        <Button Style="{StaticResource TitleBarCloseButtonStyle}"
+                        <Button Style="{DynamicResource TitleBarCloseButtonStyle}"
                                 shell:WindowChrome.IsHitTestVisibleInChrome="True"
                                 Click="OnCloseClicked">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8BB;" />
