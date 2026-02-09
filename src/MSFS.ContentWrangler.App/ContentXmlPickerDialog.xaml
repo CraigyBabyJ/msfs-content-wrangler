@@ -12,7 +12,7 @@
 
     <Border Background="{DynamicResource SurfaceAltBrush}"
             CornerRadius="10"
-            Effect="{StaticResource CardShadow}">
+            Effect="{DynamicResource CardShadow}">
         <Grid Margin="16">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />

@@ -34,7 +34,7 @@
                 BorderBrush="{DynamicResource BackgroundBrush}"
                 BorderThickness="0"
                 CornerRadius="0"
-                Effect="{StaticResource WindowShadow}">
+                Effect="{DynamicResource WindowShadow}">
             <Grid x:Name="RootGrid">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="32" />
@@ -203,7 +203,7 @@
                                                                 Background="{DynamicResource SurfaceBrush}"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="1"
-                                                                Effect="{StaticResource CardShadow}">
+                                                                Effect="{DynamicResource CardShadow}">
                                                             <Grid>
                                                                 <Image Source="{Binding ThumbnailImage}" Stretch="UniformToFill" />
 
@@ -315,7 +315,7 @@
                                                                 Background="{DynamicResource SurfaceBrush}"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="1"
-                                                                Effect="{StaticResource CardShadow}">
+                                                                Effect="{DynamicResource CardShadow}">
                                                             <Grid>
                                                                 <Image Source="{Binding ThumbnailImage}" Stretch="UniformToFill" />
                                                                 <Border Visibility="{Binding ThumbnailState, Converter={StaticResource ThumbLoadingVisibility}}"
@@ -425,7 +425,7 @@
                                                                 Background="{DynamicResource SurfaceBrush}"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="1"
-                                                                Effect="{StaticResource CardShadow}">
+                                                                Effect="{DynamicResource CardShadow}">
                                                             <Grid>
                                                                 <Image Source="{Binding ThumbnailImage}" Stretch="UniformToFill" />
 
