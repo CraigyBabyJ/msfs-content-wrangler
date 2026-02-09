@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.Win32;
 using MSFS.ContentWrangler.Core.Models;
 
@@ -34,6 +35,8 @@ public sealed partial class SettingsDialog : Window
         if (string.Equals(_configCopy.Theme, "light", StringComparison.OrdinalIgnoreCase))
         {
             ThemeLight.IsChecked = true;
+            // Ensure the dialog title stays readable in light theme even if resources are stale.
+            SettingsTitle.Foreground = Brushes.Black;
         }
         else
         {

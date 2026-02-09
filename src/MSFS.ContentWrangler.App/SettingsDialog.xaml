@@ -25,7 +25,8 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0"
+                <TextBlock x:Name="SettingsTitle"
+                           Grid.Row="0"
                            Text="Settings"
                            Margin="4,0,0,8"
                            Style="{StaticResource HeaderTextStyle}" />
