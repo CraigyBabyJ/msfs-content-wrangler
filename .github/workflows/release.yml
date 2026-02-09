@@ -1,0 +1,65 @@
+name: Release build
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Extract version from tag
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v', 'V')
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Publish (single-file exe)
+        shell: pwsh
+        run: |
+          dotnet publish src/MSFS.ContentWrangler.App/MSFS.ContentWrangler.App.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=${{ steps.version.outputs.version }} `
+            -p:InformationalVersion=${{ steps.version.outputs.tag }}
+
+      - name: Package artifacts (zip)
+        shell: pwsh
+        run: |
+          $publishDir = Join-Path $PWD 'src/MSFS.ContentWrangler.App/bin/Release/net8.0-windows/win-x64/publish'
+          if (!(Test-Path $publishDir)) { throw \"Publish output not found: $publishDir\" }
+
+          $zipName = \"MSFS.ContentWrangler.${{ steps.version.outputs.tag }}.win-x64.zip\"
+          if (Test-Path $zipName) { Remove-Item $zipName -Force }
+          Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zipName -Force
+
+          \"zip_name=$zipName\" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          \"publish_dir=$publishDir\" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+        id: package
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.version.outputs.tag }}
+          tag_name: ${{ steps.version.outputs.tag }}
+          files: |
+            ${{ steps.package.outputs.zip_name }}

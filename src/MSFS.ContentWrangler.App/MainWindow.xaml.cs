@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Windows;
@@ -31,9 +32,11 @@ public sealed partial class MainWindow : Window
 
     private readonly ObservableCollection<PackageRowViewModel> _rows = new();
     private readonly ObservableCollection<PackageRowViewModel> _officialRows = new();
+    private readonly ObservableCollection<PackageRowViewModel> _official20Rows = new();
     private readonly ObservableCollection<PackageRowViewModel> _communityRows = new();
 
     private Regex? _officialRegex;
+    private Regex? _official20Regex;
     private Regex? _communityRegex;
 
     private DispatcherTimer? _statusTimer;
@@ -62,6 +65,9 @@ public sealed partial class MainWindow : Window
         UpdateWindowLayoutForState();
         UpdateMaximizeGlyph();
 
+        var versionLabel = BuildVersionLabel();
+        TitleText.Text = $"MSFS2024 Content Wrangler {versionLabel}";
+
         _currentXml = ResolveInitialContentXml();
         RefreshPathLabel();
 
@@ -76,6 +82,30 @@ public sealed partial class MainWindow : Window
         }
 
         Closed += OnWindowClosed;
+    }
+
+    private static string BuildVersionLabel()
+    {
+        try
+        {
+            var assembly = typeof(MainWindow).Assembly;
+            var info = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+            if (!string.IsNullOrWhiteSpace(info?.InformationalVersion))
+            {
+                return info.InformationalVersion;
+            }
+
+            var version = assembly.GetName().Version;
+            if (version is not null)
+            {
+                return $"v{version}";
+            }
+        }
+        catch
+        {
+        }
+
+        return "(dev)";
     }
 
     private void TrySetWindowIcon()
@@ -97,6 +127,7 @@ public sealed partial class MainWindow : Window
     private void SetupViews()
     {
         OfficialGrid.ItemsSource = _officialRows;
+        Official20Grid.ItemsSource = _official20Rows;
         CommunityGrid.ItemsSource = _communityRows;
     }
 
@@ -124,13 +155,19 @@ public sealed partial class MainWindow : Window
         };
 
         OfficialCategoryBox.ItemsSource = categories;
+        Official20CategoryBox.ItemsSource = categories;
         CommunityCategoryBox.ItemsSource = categories;
+
         OfficialStatusBox.ItemsSource = statuses;
+        Official20StatusBox.ItemsSource = statuses;
         CommunityStatusBox.ItemsSource = statuses;
 
         OfficialCategoryBox.SelectedIndex = 0;
+        Official20CategoryBox.SelectedIndex = 0;
         CommunityCategoryBox.SelectedIndex = 0;
+
         OfficialStatusBox.SelectedIndex = 0;
+        Official20StatusBox.SelectedIndex = 0;
         CommunityStatusBox.SelectedIndex = 0;
     }
 
@@ -291,7 +328,7 @@ public sealed partial class MainWindow : Window
     {
         if (!string.IsNullOrWhiteSpace(_currentXml))
         {
-            Title = $"MSFS2024 Content Wrangler — {_currentXml}";
+            Title = $"{TitleText.Text} — {_currentXml}";
             PathText.Text = _currentXml;
         }
     }
@@ -340,10 +377,13 @@ public sealed partial class MainWindow : Window
     private void ApplyFilters()
     {
         _officialRows.Clear();
+        _official20Rows.Clear();
         _communityRows.Clear();
 
         var officialCategory = OfficialCategoryBox.SelectedItem as string;
         var officialStatus = OfficialStatusBox.SelectedItem as string;
+        var official20Category = Official20CategoryBox.SelectedItem as string;
+        var official20Status = Official20StatusBox.SelectedItem as string;
         var communityCategory = CommunityCategoryBox.SelectedItem as string;
         var communityStatus = CommunityStatusBox.SelectedItem as string;
 
@@ -354,6 +394,13 @@ public sealed partial class MainWindow : Window
                 ApplySearchFilter(row, _officialRegex))
             {
                 _officialRows.Add(row);
+            }
+
+            if (IsRowForTab(row, source: "official", sim: "fs20") &&
+                ApplyCategoryAndStatusFilter(row, official20Category, official20Status) &&
+                ApplySearchFilter(row, _official20Regex))
+            {
+                _official20Rows.Add(row);
             }
 
             if (IsRowForTab(row, source: "community", sim: "fs24") &&
@@ -401,6 +448,13 @@ public sealed partial class MainWindow : Window
         UpdateCountMessage("Official Store (FS2024)");
     }
 
+    private void OnOfficial20FilterChanged(object sender, RoutedEventArgs e)
+    {
+        _official20Regex = BuildRegex(Official20SearchBox.Text);
+        ApplyFilters();
+        UpdateCountMessage("Official Store (FS2020)");
+    }
+
     private void OnCommunityFilterChanged(object sender, RoutedEventArgs e)
     {
         _communityRegex = BuildRegex(CommunitySearchBox.Text);
@@ -423,9 +477,19 @@ public sealed partial class MainWindow : Window
 
     private void UpdateCountMessage(string title)
     {
-        var count = title.StartsWith("Official", StringComparison.OrdinalIgnoreCase)
-            ? _officialRows.Count
-            : _communityRows.Count;
+        int count;
+        if (title.StartsWith("Community", StringComparison.OrdinalIgnoreCase))
+        {
+            count = _communityRows.Count;
+        }
+        else if (title.Contains("FS2020", StringComparison.OrdinalIgnoreCase))
+        {
+            count = _official20Rows.Count;
+        }
+        else
+        {
+            count = _officialRows.Count;
+        }
         SetStatus($"{title}: showing {count} of {_rows.Count} total", 3000);
     }
 
@@ -467,12 +531,16 @@ public sealed partial class MainWindow : Window
 
     private DataGrid GetActiveGrid()
     {
-        return ReferenceEquals(MainTabs.SelectedItem, CommunityTab) ? CommunityGrid : OfficialGrid;
+        if (ReferenceEquals(MainTabs.SelectedItem, CommunityTab)) return CommunityGrid;
+        if (ReferenceEquals(MainTabs.SelectedItem, Official20Tab)) return Official20Grid;
+        return OfficialGrid;
     }
 
     private string GetActiveTabTitle()
     {
-        return ReferenceEquals(MainTabs.SelectedItem, CommunityTab) ? "Community Folder (FS2024)" : "Official Store (FS2024)";
+        if (ReferenceEquals(MainTabs.SelectedItem, CommunityTab)) return "Community Folder (FS2024)";
+        if (ReferenceEquals(MainTabs.SelectedItem, Official20Tab)) return "Official Store (FS2020)";
+        return "Official Store (FS2024)";
     }
 
     private async void OnSaveChanges(object sender, RoutedEventArgs e)

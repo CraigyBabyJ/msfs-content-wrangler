@@ -1,20 +1,9 @@
 # runtime
 /cache/
-dist/
-build/
-*.spec
 *.log
 
 # user config
 config.json
-
-# Python
-__pycache__/
-*.pyc
-
-# venvs
-.venv/
-venv/
 
 # .NET build artifacts
 bin/

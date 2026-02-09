@@ -57,7 +57,8 @@
                     <Border Grid.Column="0"
                             Background="Transparent"
                             shell:WindowChrome.IsHitTestVisibleInChrome="True">
-                        <TextBlock Text="MSFS2024 Content Wrangler"
+                        <TextBlock x:Name="TitleText"
+                                   Text="MSFS2024 Content Wrangler"
                                    VerticalAlignment="Center"
                                    Margin="16,0,0,0"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
@@ -70,13 +71,19 @@
                                 Orientation="Horizontal"
                                 VerticalAlignment="Center"
                                 Margin="0,0,0,0">
-                        <Button Style="{StaticResource TitleBarButtonStyle}" Click="OnMinimizeClicked">
+                        <Button Style="{StaticResource TitleBarButtonStyle}"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="OnMinimizeClicked">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE921;" />
                         </Button>
-                        <Button Style="{StaticResource TitleBarButtonStyle}" Click="OnMaximizeRestoreClicked">
+                        <Button Style="{StaticResource TitleBarButtonStyle}"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="OnMaximizeRestoreClicked">
                             <TextBlock x:Name="MaximizeGlyph" FontFamily="Segoe MDL2 Assets" Text="&#xE922;" />
                         </Button>
-                        <Button Style="{StaticResource TitleBarCloseButtonStyle}" Click="OnCloseClicked">
+                        <Button Style="{StaticResource TitleBarCloseButtonStyle}"
+                                shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                Click="OnCloseClicked">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8BB;" />
                         </Button>
                     </StackPanel>
@@ -133,7 +140,7 @@
                             Background="{DynamicResource SurfaceAltBrush}"
                             BorderThickness="0"
                             SelectionChanged="OnTabSelectionChanged">
-                    <TabItem x:Name="OfficialTab" Header="Official Store (FS2024)">
+                    <TabItem x:Name="OfficialTab" Header="Official 24">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -148,12 +155,12 @@
                                          Style="{StaticResource SearchTextBoxStyle}"
                                          TextChanged="OnOfficialFilterChanged" />
                                 <ComboBox x:Name="OfficialCategoryBox"
-                                          Width="160"
+                                          Width="240"
                                           Margin="0,0,10,0"
                                           Style="{StaticResource ModernComboBoxStyle}"
                                           SelectionChanged="OnOfficialFilterChanged" />
                                 <ComboBox x:Name="OfficialStatusBox"
-                                          Width="160"
+                                          Width="240"
                                           Margin="0,0,10,0"
                                           Style="{StaticResource ModernComboBoxStyle}"
                                           SelectionChanged="OnOfficialFilterChanged" />
@@ -245,7 +252,117 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem x:Name="CommunityTab" Header="Community Folder (FS2024)">
+                    <TabItem x:Name="Official20Tab" Header="Official 20">
+                        <Grid Margin="12">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <WrapPanel Grid.Row="0" Margin="0,0,0,10">
+                                <TextBox x:Name="Official20SearchBox"
+                                         Width="260"
+                                         Margin="0,0,10,0"
+                                         Tag="Search FS2020 packages"
+                                         Style="{StaticResource SearchTextBoxStyle}"
+                                         TextChanged="OnOfficial20FilterChanged" />
+                                <ComboBox x:Name="Official20CategoryBox"
+                                          Width="240"
+                                          Margin="0,0,10,0"
+                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          SelectionChanged="OnOfficial20FilterChanged" />
+                                <ComboBox x:Name="Official20StatusBox"
+                                          Width="240"
+                                          Margin="0,0,10,0"
+                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          SelectionChanged="OnOfficial20FilterChanged" />
+                                <Button x:Name="Official20ActivateButton"
+                                        Content="Activate Selected"
+                                        Style="{StaticResource SecondaryActionButton}"
+                                        Click="OnActivateSelected" />
+                                <Button x:Name="Official20DisableButton"
+                                        Content="Disable Selected"
+                                        Margin="8,0,0,0"
+                                        Style="{StaticResource SecondaryActionButton}"
+                                        Click="OnDisableSelected" />
+                            </WrapPanel>
+
+                            <Border Grid.Row="1"
+                                    Background="{DynamicResource SurfaceAltBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8">
+                                <DataGrid Grid.Row="1" x:Name="Official20Grid"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="True"
+                                          SelectionMode="Extended"
+                                          SelectionUnit="FullRow"
+                                          CanUserSortColumns="True"
+                                          LoadingRow="OnGridLoadingRow"
+                                          SelectionChanged="OnGridSelectionChanged">
+                                    <DataGrid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="Refresh thumbnail(s)" Click="OnRefreshThumbnailsClicked" />
+                                        </ContextMenu>
+                                    </DataGrid.ContextMenu>
+                                    <DataGrid.Columns>
+                                        <DataGridTemplateColumn x:Name="Official20ThumbColumn" Header="Thumbnail" Width="190">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Grid Width="170" Height="72">
+                                                        <Border CornerRadius="6"
+                                                                Background="{DynamicResource SurfaceBrush}"
+                                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                                BorderThickness="1"
+                                                                Effect="{StaticResource CardShadow}">
+                                                            <Grid>
+                                                                <Image Source="{Binding ThumbnailImage}" Stretch="UniformToFill" />
+                                                                <Border Visibility="{Binding ThumbnailState, Converter={StaticResource ThumbLoadingVisibility}}"
+                                                                        Background="#AA1B1B2B">
+                                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                                        <ProgressBar Width="80" Height="6" IsIndeterminate="True" />
+                                                                        <TextBlock Text="Loading..." Margin="0,6,0,0" Style="{StaticResource SecondaryTextStyle}" />
+                                                                    </StackPanel>
+                                                                </Border>
+                                                                <Border Visibility="{Binding ThumbnailState, Converter={StaticResource ThumbMissingVisibility}}"
+                                                                        Background="#B01B1B2B">
+                                                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                                                        <Path Data="{Binding Category, Converter={StaticResource CategoryIconConverter}}"
+                                                                              Fill="{DynamicResource TextSecondaryBrush}"
+                                                                              Width="20"
+                                                                              Height="20" />
+                                                                        <TextBlock Text="No image"
+                                                                                   Margin="0,6,0,0"
+                                                                                   Style="{StaticResource SecondaryTextStyle}" />
+                                                                    </StackPanel>
+                                                                </Border>
+                                                            </Grid>
+                                                        </Border>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*" />
+                                        <DataGridTemplateColumn Header="Status" Width="150">
+                                            <DataGridTemplateColumn.CellTemplate>
+                                                <DataTemplate>
+                                                    <Button Content="{Binding Status}"
+                                                            Click="OnStatusToggleClicked"
+                                                            IsEnabled="{Binding IsToggleable}"
+                                                            Style="{StaticResource StatusBadgeButtonStyle}" />
+                                                </DataTemplate>
+                                            </DataGridTemplateColumn.CellTemplate>
+                                        </DataGridTemplateColumn>
+                                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="160" />
+                                        <DataGridTextColumn Header="Vendor" Binding="{Binding Vendor}" Width="160" />
+                                        <DataGridTextColumn Header="Sim" Binding="{Binding Sim}" Width="0" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+
+                    <TabItem x:Name="CommunityTab" Header="Community 24">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -260,12 +377,12 @@
                                          Style="{StaticResource SearchTextBoxStyle}"
                                          TextChanged="OnCommunityFilterChanged" />
                                 <ComboBox x:Name="CommunityCategoryBox"
-                                          Width="160"
+                                          Width="240"
                                           Margin="0,0,10,0"
                                           Style="{StaticResource ModernComboBoxStyle}"
                                           SelectionChanged="OnCommunityFilterChanged" />
                                 <ComboBox x:Name="CommunityStatusBox"
-                                          Width="160"
+                                          Width="240"
                                           Margin="0,0,10,0"
                                           Style="{StaticResource ModernComboBoxStyle}"
                                           SelectionChanged="OnCommunityFilterChanged" />
