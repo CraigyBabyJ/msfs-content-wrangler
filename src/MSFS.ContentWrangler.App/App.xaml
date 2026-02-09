@@ -5,6 +5,18 @@
     StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
+            <!-- Fallback effects so StartupUri windows can resolve these even if merged dictionaries fail to load. -->
+            <DropShadowEffect x:Key="WindowShadow"
+                              BlurRadius="18"
+                              Opacity="0.4"
+                              ShadowDepth="0"
+                              Color="#000000" />
+            <DropShadowEffect x:Key="CardShadow"
+                              BlurRadius="10"
+                              Opacity="0.28"
+                              ShadowDepth="0"
+                              Color="#000000" />
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/AppStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
