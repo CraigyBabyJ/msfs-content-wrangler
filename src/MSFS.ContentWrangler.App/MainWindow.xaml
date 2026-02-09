@@ -5,6 +5,7 @@
     xmlns:local="clr-namespace:MSFS.ContentWrangler.App"
     xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
     Title="MSFS2024 Content Wrangler"
+    Icon="/icons/app.ico"
     MinWidth="980"
     MinHeight="640"
     WindowStartupLocation="Manual"
@@ -25,15 +26,18 @@
         <local:ThumbnailStateToVisibilityConverter x:Key="ThumbMissingVisibility" TargetState="Missing" />
         <local:ThumbnailStateToVisibilityConverter x:Key="ThumbLoadingVisibility" TargetState="Loading" />
         <local:CategoryToGeometryConverter x:Key="CategoryIconConverter" />
+        <!-- Keep this converter local so it is available even if theme dictionaries are deferred. -->
+        <local:SvgFileToGeometryConverter x:Key="SvgFileToGeometryConverter" />
     </Window.Resources>
 
     <Grid Background="{DynamicResource BackgroundBrush}">
         <Border x:Name="WindowBorder"
                 Margin="0"
                 Background="{DynamicResource BackgroundBrush}"
-                BorderBrush="{DynamicResource BackgroundBrush}"
-                BorderThickness="0"
-                CornerRadius="0"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="10"
+                ClipToBounds="True"
                 Effect="{DynamicResource WindowShadow}">
             <Grid x:Name="RootGrid">
                 <Grid.RowDefinitions>
@@ -73,16 +77,19 @@
                                 Margin="0,0,0,0">
                         <Button Style="{DynamicResource TitleBarButtonStyle}"
                                 shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                ToolTip="Minimize"
                                 Click="OnMinimizeClicked">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE921;" />
                         </Button>
                         <Button Style="{DynamicResource TitleBarButtonStyle}"
                                 shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                ToolTip="Maximize / Restore"
                                 Click="OnMaximizeRestoreClicked">
                             <TextBlock x:Name="MaximizeGlyph" FontFamily="Segoe MDL2 Assets" Text="&#xE922;" />
                         </Button>
                         <Button Style="{DynamicResource TitleBarCloseButtonStyle}"
                                 shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                                ToolTip="Close"
                                 Click="OnCloseClicked">
                             <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8BB;" />
                         </Button>
@@ -99,10 +106,29 @@
                         CornerRadius="8">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal">
-                            <Button x:Name="SwitchContentButton" Content="Switch Content.xml" Style="{StaticResource SubtleButtonStyle}" Click="OnSwitchContentXml" Margin="0,0,8,0" />
-                            <Button x:Name="OpenContentButton" Content="Open..." Style="{StaticResource SubtleButtonStyle}" Click="OnOpenContentXml" Margin="0,0,8,0" />
-                            <Button x:Name="ReloadButton" Content="Reload" Style="{StaticResource SubtleButtonStyle}" Click="OnReload" Margin="0,0,8,0" />
-                            <Button x:Name="SettingsButton" Content="Settings" Style="{StaticResource SubtleButtonStyle}" Click="OnSettings" />
+                            <Button x:Name="SwitchContentButton"
+                                    Content="Switch Content.xml"
+                                    Style="{DynamicResource SubtleButtonStyle}"
+                                    ToolTip="Pick from detected Content.xml files under LocalCache."
+                                    Click="OnSwitchContentXml"
+                                    Margin="0,0,8,0" />
+                            <Button x:Name="OpenContentButton"
+                                    Content="Open..."
+                                    Style="{DynamicResource SubtleButtonStyle}"
+                                    ToolTip="Browse to a Content.xml file."
+                                    Click="OnOpenContentXml"
+                                    Margin="0,0,8,0" />
+                            <Button x:Name="ReloadButton"
+                                    Content="Reload"
+                                    Style="{DynamicResource SubtleButtonStyle}"
+                                    ToolTip="Reload the currently selected Content.xml."
+                                    Click="OnReload"
+                                    Margin="0,0,8,0" />
+                            <Button x:Name="SettingsButton"
+                                    Content="Settings"
+                                    Style="{DynamicResource SubtleButtonStyle}"
+                                    ToolTip="Open Settings (appearance, cache, rules, paths)."
+                                    Click="OnSettings" />
                         </StackPanel>
 
                         <Border Margin="0,12,0,0"
@@ -118,16 +144,17 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                     <TextBlock Text="Prefer Community Folder Airports over default"
-                                               Style="{StaticResource HeaderTextStyle}" />
+                                               Style="{DynamicResource HeaderTextStyle}" />
                                     <TextBlock Text="  •  One-click disable them"
                                                Margin="8,2,0,0"
-                                               Style="{StaticResource SecondaryTextStyle}" />
+                                               Style="{DynamicResource SecondaryTextStyle}" />
                                 </StackPanel>
                                 <Button Grid.Column="1"
                                         x:Name="PreferCommunityButton"
                                         Content="Prefer Community Airports"
-                                        Style="{StaticResource SecondaryActionButton}"
-                                        Margin="24,0,0,0"
+                                        Style="{DynamicResource SecondaryActionButton}"
+                                        Margin="48,0,0,0"
+                                        ToolTip="Disable store duplicates so your Community airport takes priority (requires Save)."
                                         Click="OnPreferCommunityAirports" />
                             </Grid>
                         </Border>
@@ -141,7 +168,9 @@
                             Background="{DynamicResource SurfaceAltBrush}"
                             BorderThickness="0"
                             SelectionChanged="OnTabSelectionChanged">
-                    <TabItem x:Name="OfficialTab" Header="Official Store (FS24)">
+                     <TabItem x:Name="OfficialTab"
+                              Header="Official (FS24)"
+                              ToolTip="Packages from the Official (FS24) store content set.">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -153,26 +182,31 @@
                                          Width="260"
                                          Margin="0,0,10,0"
                                          Tag="Search packages"
-                                         Style="{StaticResource SearchTextBoxStyle}"
+                                         Style="{DynamicResource SearchTextBoxStyle}"
+                                         ToolTip="Filter by package name or vendor."
                                          TextChanged="OnOfficialFilterChanged" />
                                 <ComboBox x:Name="OfficialCategoryBox"
                                           Width="240"
                                           Margin="0,0,10,0"
-                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          Style="{DynamicResource ModernComboBoxStyle}"
+                                          ToolTip="Filter by category."
                                           SelectionChanged="OnOfficialFilterChanged" />
                                 <ComboBox x:Name="OfficialStatusBox"
                                           Width="240"
                                           Margin="0,0,10,0"
-                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          Style="{DynamicResource ModernComboBoxStyle}"
+                                          ToolTip="Filter by status."
                                           SelectionChanged="OnOfficialFilterChanged" />
                                 <Button x:Name="OfficialActivateButton"
                                         Content="Activate Selected"
-                                        Style="{StaticResource SecondaryActionButton}"
+                                        Style="{DynamicResource SecondaryActionButton}"
+                                        ToolTip="Set selected packages to Activated (requires Save)."
                                         Click="OnActivateSelected" />
                                 <Button x:Name="OfficialDisableButton"
                                         Content="Disable Selected"
                                         Margin="8,0,0,0"
-                                        Style="{StaticResource SecondaryActionButton}"
+                                        Style="{DynamicResource SecondaryActionButton}"
+                                        ToolTip="Set selected packages to UserDisabled (requires Save)."
                                         Click="OnDisableSelected" />
                             </WrapPanel>
 
@@ -191,7 +225,9 @@
                                           SelectionChanged="OnGridSelectionChanged">
                                     <DataGrid.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="Refresh thumbnail(s)" Click="OnRefreshThumbnailsClicked" />
+                                            <MenuItem Header="Refresh thumbnail(s)"
+                                                      ToolTip="Force re-scan thumbnails for the selected row(s)."
+                                                      Click="OnRefreshThumbnailsClicked" />
                                         </ContextMenu>
                                     </DataGrid.ContextMenu>
                                     <DataGrid.Columns>
@@ -203,6 +239,7 @@
                                                                 Background="{DynamicResource SurfaceBrush}"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="1"
+                                                                ToolTip="{Binding ThumbnailToolTip}"
                                                                 Effect="{DynamicResource CardShadow}">
                                                             <Grid>
                                                                 <Image Source="{Binding ThumbnailImage}" Stretch="UniformToFill" />
@@ -211,7 +248,7 @@
                                                                         Background="#AA1B1B2B">
                                                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                                                         <ProgressBar Width="80" Height="6" IsIndeterminate="True" />
-                                                                        <TextBlock Text="Loading..." Margin="0,6,0,0" Style="{StaticResource SecondaryTextStyle}" />
+                                                                        <TextBlock Text="Loading..." Margin="0,6,0,0" Style="{DynamicResource SecondaryTextStyle}" />
                                                                     </StackPanel>
                                                                 </Border>
 
@@ -224,7 +261,7 @@
                                                                               Height="20" />
                                                                         <TextBlock Text="No image"
                                                                                    Margin="0,6,0,0"
-                                                                                   Style="{StaticResource SecondaryTextStyle}" />
+                                                                                   Style="{DynamicResource SecondaryTextStyle}" />
                                                                     </StackPanel>
                                                                 </Border>
                                                             </Grid>
@@ -240,7 +277,8 @@
                                                     <Button Content="{Binding Status}"
                                                             Click="OnStatusToggleClicked"
                                                             IsEnabled="{Binding IsToggleable}"
-                                                            Style="{StaticResource StatusBadgeButtonStyle}" />
+                                                            ToolTip="Click to toggle between Activated and UserDisabled (requires Save)."
+                                                            Style="{DynamicResource StatusBadgeButtonStyle}" />
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -253,7 +291,9 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem x:Name="Official20Tab" Header="Official Store (FS20)">
+                     <TabItem x:Name="Official20Tab"
+                              Header="Official (FS20)"
+                              ToolTip="Packages from the Official (FS20) store content set.">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -265,26 +305,31 @@
                                          Width="260"
                                          Margin="0,0,10,0"
                                          Tag="Search FS20 packages"
-                                         Style="{StaticResource SearchTextBoxStyle}"
+                                         Style="{DynamicResource SearchTextBoxStyle}"
+                                         ToolTip="Filter by package name or vendor."
                                          TextChanged="OnOfficial20FilterChanged" />
                                 <ComboBox x:Name="Official20CategoryBox"
                                           Width="240"
                                           Margin="0,0,10,0"
-                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          Style="{DynamicResource ModernComboBoxStyle}"
+                                          ToolTip="Filter by category."
                                           SelectionChanged="OnOfficial20FilterChanged" />
                                 <ComboBox x:Name="Official20StatusBox"
                                           Width="240"
                                           Margin="0,0,10,0"
-                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          Style="{DynamicResource ModernComboBoxStyle}"
+                                          ToolTip="Filter by status."
                                           SelectionChanged="OnOfficial20FilterChanged" />
                                 <Button x:Name="Official20ActivateButton"
                                         Content="Activate Selected"
-                                        Style="{StaticResource SecondaryActionButton}"
+                                        Style="{DynamicResource SecondaryActionButton}"
+                                        ToolTip="Set selected packages to Activated (requires Save)."
                                         Click="OnActivateSelected" />
                                 <Button x:Name="Official20DisableButton"
                                         Content="Disable Selected"
                                         Margin="8,0,0,0"
-                                        Style="{StaticResource SecondaryActionButton}"
+                                        Style="{DynamicResource SecondaryActionButton}"
+                                        ToolTip="Set selected packages to UserDisabled (requires Save)."
                                         Click="OnDisableSelected" />
                             </WrapPanel>
 
@@ -303,7 +348,9 @@
                                           SelectionChanged="OnGridSelectionChanged">
                                     <DataGrid.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="Refresh thumbnail(s)" Click="OnRefreshThumbnailsClicked" />
+                                            <MenuItem Header="Refresh thumbnail(s)"
+                                                      ToolTip="Force re-scan thumbnails for the selected row(s)."
+                                                      Click="OnRefreshThumbnailsClicked" />
                                         </ContextMenu>
                                     </DataGrid.ContextMenu>
                                     <DataGrid.Columns>
@@ -315,6 +362,7 @@
                                                                 Background="{DynamicResource SurfaceBrush}"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="1"
+                                                                ToolTip="{Binding ThumbnailToolTip}"
                                                                 Effect="{DynamicResource CardShadow}">
                                                             <Grid>
                                                                 <Image Source="{Binding ThumbnailImage}" Stretch="UniformToFill" />
@@ -322,7 +370,7 @@
                                                                         Background="#AA1B1B2B">
                                                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                                                         <ProgressBar Width="80" Height="6" IsIndeterminate="True" />
-                                                                        <TextBlock Text="Loading..." Margin="0,6,0,0" Style="{StaticResource SecondaryTextStyle}" />
+                                                                        <TextBlock Text="Loading..." Margin="0,6,0,0" Style="{DynamicResource SecondaryTextStyle}" />
                                                                     </StackPanel>
                                                                 </Border>
                                                                 <Border Visibility="{Binding ThumbnailState, Converter={StaticResource ThumbMissingVisibility}}"
@@ -334,7 +382,7 @@
                                                                               Height="20" />
                                                                         <TextBlock Text="No image"
                                                                                    Margin="0,6,0,0"
-                                                                                   Style="{StaticResource SecondaryTextStyle}" />
+                                                                                   Style="{DynamicResource SecondaryTextStyle}" />
                                                                     </StackPanel>
                                                                 </Border>
                                                             </Grid>
@@ -350,7 +398,8 @@
                                                     <Button Content="{Binding Status}"
                                                             Click="OnStatusToggleClicked"
                                                             IsEnabled="{Binding IsToggleable}"
-                                                            Style="{StaticResource StatusBadgeButtonStyle}" />
+                                                            ToolTip="Click to toggle between Activated and UserDisabled (requires Save)."
+                                                            Style="{DynamicResource StatusBadgeButtonStyle}" />
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -363,7 +412,9 @@
                         </Grid>
                     </TabItem>
 
-                    <TabItem x:Name="CommunityTab" Header="Community Folder (FS24)">
+                     <TabItem x:Name="CommunityTab"
+                              Header="Community (FS24)"
+                              ToolTip="Packages installed under the Community folder (FS24).">
                         <Grid Margin="12">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -375,26 +426,31 @@
                                          Width="260"
                                          Margin="0,0,10,0"
                                          Tag="Search community"
-                                         Style="{StaticResource SearchTextBoxStyle}"
+                                         Style="{DynamicResource SearchTextBoxStyle}"
+                                         ToolTip="Filter by package name or vendor."
                                          TextChanged="OnCommunityFilterChanged" />
                                 <ComboBox x:Name="CommunityCategoryBox"
                                           Width="240"
                                           Margin="0,0,10,0"
-                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          Style="{DynamicResource ModernComboBoxStyle}"
+                                          ToolTip="Filter by category."
                                           SelectionChanged="OnCommunityFilterChanged" />
                                 <ComboBox x:Name="CommunityStatusBox"
                                           Width="240"
                                           Margin="0,0,10,0"
-                                          Style="{StaticResource ModernComboBoxStyle}"
+                                          Style="{DynamicResource ModernComboBoxStyle}"
+                                          ToolTip="Filter by status."
                                           SelectionChanged="OnCommunityFilterChanged" />
                                 <Button x:Name="CommunityActivateButton"
                                         Content="Activate Selected"
-                                        Style="{StaticResource SecondaryActionButton}"
+                                        Style="{DynamicResource SecondaryActionButton}"
+                                        ToolTip="Set selected packages to Activated (requires Save)."
                                         Click="OnActivateSelected" />
                                 <Button x:Name="CommunityDisableButton"
                                         Content="Disable Selected"
                                         Margin="8,0,0,0"
-                                        Style="{StaticResource SecondaryActionButton}"
+                                        Style="{DynamicResource SecondaryActionButton}"
+                                        ToolTip="Set selected packages to UserDisabled (requires Save)."
                                         Click="OnDisableSelected" />
                             </WrapPanel>
 
@@ -413,7 +469,9 @@
                                           SelectionChanged="OnGridSelectionChanged">
                                     <DataGrid.ContextMenu>
                                         <ContextMenu>
-                                            <MenuItem Header="Refresh thumbnail(s)" Click="OnRefreshThumbnailsClicked" />
+                                            <MenuItem Header="Refresh thumbnail(s)"
+                                                      ToolTip="Force re-scan thumbnails for the selected row(s)."
+                                                      Click="OnRefreshThumbnailsClicked" />
                                         </ContextMenu>
                                     </DataGrid.ContextMenu>
                                     <DataGrid.Columns>
@@ -425,6 +483,7 @@
                                                                 Background="{DynamicResource SurfaceBrush}"
                                                                 BorderBrush="{DynamicResource BorderBrush}"
                                                                 BorderThickness="1"
+                                                                ToolTip="{Binding ThumbnailToolTip}"
                                                                 Effect="{DynamicResource CardShadow}">
                                                             <Grid>
                                                                 <Image Source="{Binding ThumbnailImage}" Stretch="UniformToFill" />
@@ -433,7 +492,7 @@
                                                                         Background="#AA1B1B2B">
                                                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                                                         <ProgressBar Width="80" Height="6" IsIndeterminate="True" />
-                                                                        <TextBlock Text="Loading..." Margin="0,6,0,0" Style="{StaticResource SecondaryTextStyle}" />
+                                                                        <TextBlock Text="Loading..." Margin="0,6,0,0" Style="{DynamicResource SecondaryTextStyle}" />
                                                                     </StackPanel>
                                                                 </Border>
 
@@ -446,7 +505,7 @@
                                                                               Height="20" />
                                                                         <TextBlock Text="No image"
                                                                                    Margin="0,6,0,0"
-                                                                                   Style="{StaticResource SecondaryTextStyle}" />
+                                                                                   Style="{DynamicResource SecondaryTextStyle}" />
                                                                     </StackPanel>
                                                                 </Border>
                                                             </Grid>
@@ -462,7 +521,8 @@
                                                     <Button Content="{Binding Status}"
                                                             Click="OnStatusToggleClicked"
                                                             IsEnabled="{Binding IsToggleable}"
-                                                            Style="{StaticResource StatusBadgeButtonStyle}" />
+                                                            ToolTip="Click to toggle between Activated and UserDisabled (requires Save)."
+                                                            Style="{DynamicResource StatusBadgeButtonStyle}" />
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -497,10 +557,19 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Style="{StaticResource FooterIconButtonStyle}"
-                                            ToolTip="{Binding Label, Mode=OneWay}"
+                                    <Button Style="{DynamicResource FooterIconButtonStyle}"
                                             Tag="{Binding Uri, Mode=OneWay}"
                                             Click="OnFooterLinkClicked">
+                                        <Button.ToolTip>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Label, Mode=OneWay}"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                <TextBlock Text="{Binding Uri, Mode=OneWay}"
+                                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                                           TextWrapping="Wrap" />
+                                            </StackPanel>
+                                        </Button.ToolTip>
                                         <Viewbox Width="18" Height="18" Stretch="Uniform">
                                             <Path Data="{Binding IconFileName, Converter={StaticResource SvgFileToGeometryConverter}}"
                                                   Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
@@ -514,7 +583,8 @@
                                 <Button Grid.Column="1"
                                         x:Name="SaveButton"
                                         Content="Save Changes"
-                                        Style="{StaticResource PrimaryActionButton}"
+                                        Style="{DynamicResource PrimaryActionButton}"
+                                        ToolTip="Write updated package statuses back to Content.xml (creates a backup first)."
                                         Click="OnSaveChanges" />
                     </Grid>
                 </Grid>
@@ -525,8 +595,13 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="StatusText" VerticalAlignment="Center" Style="{StaticResource SecondaryTextStyle}" />
-                    <TextBlock x:Name="PathText" Grid.Column="1" VerticalAlignment="Center" Style="{StaticResource SecondaryTextStyle}" TextTrimming="CharacterEllipsis" />
+                    <TextBlock x:Name="StatusText" VerticalAlignment="Center" Style="{DynamicResource SecondaryTextStyle}" />
+                    <TextBlock x:Name="PathText"
+                               Grid.Column="1"
+                               VerticalAlignment="Center"
+                               Style="{DynamicResource SecondaryTextStyle}"
+                               TextTrimming="CharacterEllipsis"
+                               ToolTip="{Binding ElementName=PathText, Path=Text}" />
                 </Grid>
             </Grid>
         </Border>

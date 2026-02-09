@@ -52,6 +52,7 @@ public sealed class AppConfig
 
                 // Migrate legacy keys/URLs so the footer stays consistent across upgrades.
                 RemoveLinkKeyInsensitive(loaded.Links, "TikTok");
+                RemoveLinkKeyInsensitive(loaded.Links, "PayPal");
                 if (RemoveLinkKeyInsensitive(loaded.Links, "Donate"))
                 {
                     // Replaced with Buy Me a Coffee.

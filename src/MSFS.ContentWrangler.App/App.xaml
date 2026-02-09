@@ -2,10 +2,15 @@
     x:Class="MSFS.ContentWrangler.App.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    StartupUri="MainWindow.xaml">
+    Startup="OnStartup">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Fallback effects so StartupUri windows can resolve these even if merged dictionaries fail to load. -->
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Load base styles early so implicit styles (Button/TabControl/etc) apply correctly. -->
+                <ResourceDictionary Source="Themes/AppStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Effects are kept here (not in AppStyles.xaml) to avoid duplicate keys and to stay available globally. -->
             <DropShadowEffect x:Key="WindowShadow"
                               BlurRadius="18"
                               Opacity="0.4"
@@ -16,11 +21,6 @@
                               Opacity="0.28"
                               ShadowDepth="0"
                               Color="#000000" />
-
-            <ResourceDictionary.MergedDictionaries>
-                <!-- Use explicit pack URI to avoid relative-URI quirks during BAML loading. -->
-                <ResourceDictionary Source="pack://application:,,,/MSFS.ContentWrangler.App;component/Themes/AppStyles.xaml" />
-            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -57,7 +57,7 @@ public sealed class ThumbnailLoader
             _cache.SetKnownPath(row.Name, directPath);
             await UpdateOnUIAsync(() =>
             {
-                row.ThumbnailImage = new BitmapImage(new Uri(directPath!, UriKind.Absolute));
+                row.ThumbnailImage = TryLoad(directPath!);
                 row.ThumbnailState = ThumbnailState.Found;
                 row.ThumbnailToolTip = $"Original: {directPath}";
             });
@@ -69,9 +69,19 @@ public sealed class ThumbnailLoader
         {
             await UpdateOnUIAsync(() =>
             {
-                row.ThumbnailImage = new BitmapImage(new Uri(knownPath!, UriKind.Absolute));
-                row.ThumbnailState = ThumbnailState.Found;
-                row.ThumbnailToolTip = $"Original: {knownPath}";
+                var img = TryLoad(knownPath!);
+                if (img != null)
+                {
+                    row.ThumbnailImage = img;
+                    row.ThumbnailState = ThumbnailState.Found;
+                    row.ThumbnailToolTip = $"Original: {knownPath}";
+                }
+                else
+                {
+                    row.ThumbnailImage = null;
+                    row.ThumbnailState = ThumbnailState.Missing;
+                    row.ThumbnailToolTip = $"Failed to load thumbnail image:\n{knownPath}";
+                }
             });
             return;
         }
@@ -83,7 +93,7 @@ public sealed class ThumbnailLoader
             {
                 row.ThumbnailImage = null;
                 row.ThumbnailState = ThumbnailState.Missing;
-                row.ThumbnailToolTip = "No thumbnail found (already scanned).";
+                row.ThumbnailToolTip = "No thumbnail found (recently scanned).";
             });
             return;
         }
@@ -102,9 +112,19 @@ public sealed class ThumbnailLoader
         {
             await UpdateOnUIAsync(() =>
             {
-                row.ThumbnailImage = new BitmapImage(new Uri(knownPath!, UriKind.Absolute));
-                row.ThumbnailState = ThumbnailState.Found;
-                row.ThumbnailToolTip = $"Original: {knownPath}";
+                var img = TryLoad(knownPath!);
+                if (img != null)
+                {
+                    row.ThumbnailImage = img;
+                    row.ThumbnailState = ThumbnailState.Found;
+                    row.ThumbnailToolTip = $"Original: {knownPath}";
+                }
+                else
+                {
+                    row.ThumbnailImage = null;
+                    row.ThumbnailState = ThumbnailState.Missing;
+                    row.ThumbnailToolTip = $"Failed to load thumbnail image:\n{knownPath}";
+                }
             });
         }
         else
@@ -113,7 +133,7 @@ public sealed class ThumbnailLoader
             {
                 row.ThumbnailImage = null;
                 row.ThumbnailState = ThumbnailState.Missing;
-                row.ThumbnailToolTip = "No thumbnail found (already scanned).";
+                row.ThumbnailToolTip = "No thumbnail found (recently scanned).";
             });
         }
     }
@@ -134,5 +154,24 @@ public sealed class ThumbnailLoader
             }
         });
         return tcs.Task;
+    }
+
+    private static BitmapImage? TryLoad(string path)
+    {
+        try
+        {
+            var bmp = new BitmapImage();
+            bmp.BeginInit();
+            bmp.CacheOption = BitmapCacheOption.OnLoad; // don't hold file locks
+            bmp.CreateOptions = BitmapCreateOptions.IgnoreImageCache;
+            bmp.UriSource = new Uri(path, UriKind.Absolute);
+            bmp.EndInit();
+            bmp.Freeze();
+            return bmp;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

@@ -8,10 +8,14 @@
     WindowStartupLocation="CenterOwner"
     WindowStyle="None"
     ShowInTaskbar="False"
+    AllowsTransparency="True"
+    Icon="/icons/app.ico"
     Background="Transparent">
 
     <Border Background="{DynamicResource SurfaceAltBrush}"
             CornerRadius="10"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
             Effect="{DynamicResource CardShadow}">
         <Grid Margin="16">
             <Grid.RowDefinitions>
@@ -36,6 +40,7 @@
 
             <TextBox x:Name="InputBox"
                      Grid.Row="2"
+                     ToolTip="Enter text here."
                      MinWidth="320" />
 
             <StackPanel Grid.Row="3"
@@ -48,13 +53,15 @@
                         IsDefault="True"
                         Click="OnOkClick"
                         Margin="0,0,6,0"
-                        Style="{StaticResource SecondaryActionButton}" />
+                        ToolTip="Confirm."
+                        Style="{DynamicResource SecondaryActionButton}" />
                 <Button x:Name="CancelButton"
                         Content="Cancel"
                         Width="90"
                         IsCancel="True"
                         Click="OnCancelClick"
-                        Style="{StaticResource SecondaryActionButton}" />
+                        ToolTip="Cancel."
+                        Style="{DynamicResource SecondaryActionButton}" />
             </StackPanel>
         </Grid>
     </Border>

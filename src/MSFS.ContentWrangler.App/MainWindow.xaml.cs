@@ -48,6 +48,9 @@ public sealed partial class MainWindow : Window
 
         TrySetWindowIcon();
 
+        // Request rounded corners for our custom chrome window on Windows 11.
+        SourceInitialized += (_, _) => DwmWindowCornerHelper.TryApply(this, WindowState == WpfWindowState.Maximized);
+
         _config = AppConfig.Load();
         _settings = AppSettingsStore.Load();
         _rulesPath = Path.Combine(AppContext.BaseDirectory, "rules.json");
@@ -224,7 +227,7 @@ public sealed partial class MainWindow : Window
             resources["BackgroundBrush"] = new SolidColorBrush(Color.FromRgb(244, 244, 248));
             resources["SurfaceBrush"] = new SolidColorBrush(Color.FromRgb(236, 236, 242));
             resources["SurfaceAltBrush"] = new SolidColorBrush(Color.FromRgb(230, 230, 238));
-            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(0, 180, 135));
+            resources["AccentBrush"] = new SolidColorBrush(Color.FromRgb(0, 140, 105));
             resources["DangerBrush"] = new SolidColorBrush(Color.FromRgb(220, 68, 68));
             resources["WarningBrush"] = new SolidColorBrush(Color.FromRgb(245, 158, 11));
             resources["TextPrimaryBrush"] = new SolidColorBrush(Colors.Black);
@@ -238,20 +241,32 @@ public sealed partial class MainWindow : Window
         }
         else
         {
-            resources["BackgroundBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E1E2E"));
-            resources["SurfaceBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2A2A3A"));
-            resources["SurfaceAltBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#242433"));
-            resources["AccentBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00D9A3"));
-            resources["DangerBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#EF4444"));
-            resources["WarningBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#F59E0B"));
-            resources["TextPrimaryBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E4E4E7"));
-            resources["TextSecondaryBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#A1A1AA"));
-            resources["BorderBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3A3A4A"));
-            resources["DividerBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2F2F3D"));
-            resources["HoverBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33334A"));
-            resources["PressedBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#26263A"));
-            resources["RowHoverBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#2F3246"));
-            resources["RowSelectedBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3A3E5A"));
+            // Dark theme: use the base values from Themes/AppStyles.xaml as the single source of truth.
+            // If the user previously applied light theme, we must remove those overrides so lookups fall back
+            // to the merged AppStyles dictionary again.
+            foreach (var key in new[]
+                     {
+                         "BackgroundBrush",
+                         "SurfaceBrush",
+                         "SurfaceAltBrush",
+                         "AccentBrush",
+                         "DangerBrush",
+                         "WarningBrush",
+                         "TextPrimaryBrush",
+                         "TextSecondaryBrush",
+                         "BorderBrush",
+                         "DividerBrush",
+                         "HoverBrush",
+                         "PressedBrush",
+                         "RowHoverBrush",
+                         "RowSelectedBrush",
+                     })
+            {
+                if (resources.Contains(key))
+                {
+                    resources.Remove(key);
+                }
+            }
         }
 
         Background = (Brush)resources["BackgroundBrush"];
@@ -311,9 +326,11 @@ public sealed partial class MainWindow : Window
         var vis = show ? Visibility.Visible : Visibility.Collapsed;
 
         OfficialThumbColumn.Visibility = vis;
+        Official20ThumbColumn.Visibility = vis;
         CommunityThumbColumn.Visibility = vis;
 
         OfficialGrid.RowHeight = show ? 72 : 32;
+        Official20Grid.RowHeight = show ? 72 : 32;
         CommunityGrid.RowHeight = show ? 72 : 32;
     }
 
@@ -339,6 +356,7 @@ public sealed partial class MainWindow : Window
     {
         UpdateWindowLayoutForState();
         UpdateMaximizeGlyph();
+        DwmWindowCornerHelper.TryApply(this, WindowState == WpfWindowState.Maximized);
     }
 
     private void UpdateMaximizeGlyph()
@@ -446,6 +464,11 @@ public sealed partial class MainWindow : Window
         var warm = _rows.Take(30).ToList();
         foreach (var row in warm)
         {
+            if (row.ThumbnailState == ThumbnailState.Unknown)
+            {
+                row.ThumbnailState = ThumbnailState.Loading;
+                row.ThumbnailToolTip = "Loading thumbnail...";
+            }
             _ = _thumbLoader.QueueAsync(row);
         }
     }
@@ -861,6 +884,8 @@ public sealed partial class MainWindow : Window
         // Queue thumbnail discovery as rows become visible (covers scrolling and filtering).
         if (_config.ShowThumbnails && _thumbLoader != null && row.ThumbnailState == ThumbnailState.Unknown)
         {
+            row.ThumbnailState = ThumbnailState.Loading;
+            row.ThumbnailToolTip = "Loading thumbnail...";
             _ = _thumbLoader.QueueAsync(row);
         }
     }

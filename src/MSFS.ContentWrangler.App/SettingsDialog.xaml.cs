@@ -23,6 +23,10 @@ public sealed partial class SettingsDialog : Window
         InitializeComponent();
         Owner = owner;
 
+        // Request rounded corners for our custom chrome window on Windows 11.
+        SourceInitialized += (_, _) => DwmWindowCornerHelper.TryApply(this, WindowState == System.Windows.WindowState.Maximized);
+        StateChanged += (_, _) => DwmWindowCornerHelper.TryApply(this, WindowState == System.Windows.WindowState.Maximized);
+
         _rulesCopy = DeepCopy(rules);
         _configCopy = DeepCopy(config);
 
@@ -35,8 +39,6 @@ public sealed partial class SettingsDialog : Window
         if (string.Equals(_configCopy.Theme, "light", StringComparison.OrdinalIgnoreCase))
         {
             ThemeLight.IsChecked = true;
-            // Ensure the dialog title stays readable in light theme even if resources are stale.
-            SettingsTitle.Foreground = Brushes.Black;
         }
         else
         {
@@ -45,6 +47,11 @@ public sealed partial class SettingsDialog : Window
 
         ShowThumbnailsCheck.IsChecked = _configCopy.ShowThumbnails;
         CleanLegacyCheck.IsChecked = _configCopy.CleanLegacyFs20;
+    }
+
+    private void OnCloseClicked(object sender, RoutedEventArgs e)
+    {
+        Close();
     }
 
     public Rules GetUpdatedRules()

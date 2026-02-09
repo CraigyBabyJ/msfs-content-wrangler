@@ -17,10 +17,24 @@ public partial class App : System.Windows.Application
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
         InitializeComponent();
+    }
 
-        // Force-load the theme dictionary at startup. WPF can defer merged-dictionary loading,
-        // which can surface as missing StaticResource keys during StartupUri window load.
-        EnsureThemeResourcesLoaded();
+    private void OnStartup(object sender, StartupEventArgs e)
+    {
+        try
+        {
+            // Force-load the theme dictionary before creating any windows.
+            EnsureThemeResourcesLoaded();
+
+            var win = new MainWindow();
+            MainWindow = win;
+            win.Show();
+        }
+        catch (Exception ex)
+        {
+            ShowFatal(ex, "Startup");
+            Shutdown(-1);
+        }
     }
 
     private void EnsureThemeResourcesLoaded()
@@ -51,7 +65,9 @@ public partial class App : System.Windows.Application
         }
         catch (Exception ex)
         {
+            // Escalate: if theme resources cannot load, the app will fail later with confusing missing StaticResource errors.
             ShowFatal(ex, "ThemeResources");
+            throw;
         }
     }
 

@@ -5,14 +5,18 @@ namespace MSFS.ContentWrangler.Core.Services;
 
 public sealed class ThumbCache
 {
+    private const string AppDataDirName = "MSFS.ContentWrangler";
     private const string CacheDirName = "cache";
     private const string CacheFileName = "thumbnails.json";
     private static readonly string[] ThumbExts = [".png", ".jpg", ".jpeg", ".webp"];
+    private static readonly TimeSpan NegativeCacheTtl = TimeSpan.FromHours(6);
 
     private readonly object _dbLock = new();
+    private readonly object _saveNowLock = new();
     private Dictionary<string, ThumbEntry> _db = new(StringComparer.OrdinalIgnoreCase);
     private DateTime _lastSave = DateTime.MinValue;
     private bool _pending;
+    private Timer? _saveTimer;
 
     public ThumbCache(string contentXmlPath)
     {
@@ -20,14 +24,35 @@ public sealed class ThumbCache
         LocalCache = FindLocalCacheRoot(contentXmlPath);
         InstalledRoot = InstalledPackagesRoot(LocalCache);
 
-        var appDir = AppContext.BaseDirectory;
-        CacheDir = Path.Combine(appDir, CacheDirName);
+        // Cache belongs under user-local app data (not next to the EXE).
+        // The app may be installed under Program Files where BaseDirectory is not writable.
+        var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        CacheDir = Path.Combine(local, AppDataDirName, CacheDirName);
         Directory.CreateDirectory(CacheDir);
         CachePath = Path.Combine(CacheDir, CacheFileName);
 
+        // Best-effort migrate older cache from the app folder (debug builds / older versions).
+        var oldCacheDir = Path.Combine(AppContext.BaseDirectory, CacheDirName);
+        var oldCachePath = Path.Combine(oldCacheDir, CacheFileName);
+
         if (!File.Exists(CachePath))
         {
-            File.WriteAllText(CachePath, "{}");
+            if (File.Exists(oldCachePath))
+            {
+                try
+                {
+                    File.Copy(oldCachePath, CachePath, true);
+                }
+                catch
+                {
+                    // ignore; fall back to creating a fresh file
+                }
+            }
+
+            if (!File.Exists(CachePath))
+            {
+                File.WriteAllText(CachePath, "{}");
+            }
         }
 
         _db = LoadDb();
@@ -56,9 +81,10 @@ public sealed class ThumbCache
         }
 
         var mtime = File.GetLastWriteTimeUtc(path).ToOADate();
+        var scan = DateTime.UtcNow.ToOADate();
         lock (_dbLock)
         {
-            _db[name] = new ThumbEntry { Path = path, MTime = mtime, Source = "content.xml" };
+            _db[name] = new ThumbEntry { Path = path, MTime = mtime, LastScanUtc = scan, Source = "content.xml" };
         }
         SaveDbThrottled();
     }
@@ -121,9 +147,25 @@ public sealed class ThumbCache
             }
             if (string.IsNullOrWhiteSpace(entry.Path))
             {
-                return "missing";
+                // Treat old-format negative entries (LastScanUtc==0) as stale to allow re-discovery.
+                if (entry.LastScanUtc <= 0.0)
+                {
+                    return "stale_missing";
+                }
+
+                try
+                {
+                    var age = DateTime.UtcNow - DateTime.FromOADate(entry.LastScanUtc);
+                    return age > NegativeCacheTtl ? "stale_missing" : "missing";
+                }
+                catch
+                {
+                    return "stale_missing";
+                }
             }
-            return File.Exists(entry.Path) ? "found" : "missing";
+
+            // If the saved path no longer exists, re-scan to allow recovery (moves, reinstalls, etc).
+            return File.Exists(entry.Path) ? "found" : "stale_missing";
         }
     }
 
@@ -155,6 +197,23 @@ public sealed class ThumbCache
             }
         }
 
+        // Respect a short-lived negative cache to avoid repeatedly scanning packages that truly have no thumbnail.
+        if (entry != null && string.IsNullOrWhiteSpace(entry.Path) && entry.LastScanUtc > 0.0)
+        {
+            try
+            {
+                var age = DateTime.UtcNow - DateTime.FromOADate(entry.LastScanUtc);
+                if (age <= NegativeCacheTtl)
+                {
+                    return;
+                }
+            }
+            catch
+            {
+                // If the value is invalid, proceed to rescan.
+            }
+        }
+
         string? found = null;
         try
         {
@@ -165,11 +224,12 @@ public sealed class ThumbCache
             found = null;
         }
 
+        var scan = DateTime.UtcNow.ToOADate();
         if (string.IsNullOrWhiteSpace(found))
         {
             lock (_dbLock)
             {
-                _db[packageName] = new ThumbEntry { Path = string.Empty, MTime = 0.0, Source = "none" };
+                _db[packageName] = new ThumbEntry { Path = string.Empty, MTime = 0.0, LastScanUtc = scan, Source = "none" };
             }
             SaveDbThrottled();
             return;
@@ -182,7 +242,7 @@ public sealed class ThumbCache
         var mtimeFound = File.GetLastWriteTimeUtc(found).ToOADate();
         lock (_dbLock)
         {
-            _db[packageName] = new ThumbEntry { Path = found, MTime = mtimeFound, Source = sourceTag };
+            _db[packageName] = new ThumbEntry { Path = found, MTime = mtimeFound, LastScanUtc = scan, Source = sourceTag };
         }
         SaveDbThrottled();
     }
@@ -193,7 +253,24 @@ public sealed class ThumbCache
         {
             var json = File.ReadAllText(CachePath);
             var data = JsonSerializer.Deserialize<Dictionary<string, ThumbEntry>>(json);
-            return data ?? new Dictionary<string, ThumbEntry>(StringComparer.OrdinalIgnoreCase);
+            if (data == null)
+            {
+                return new Dictionary<string, ThumbEntry>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            // Migration: older versions could incorrectly write negative entries due to discovery bugs.
+            // Treat existing "none" entries as stale so they will be re-discovered as needed.
+            foreach (var kv in data)
+            {
+                if (kv.Value == null) continue;
+                if (string.IsNullOrWhiteSpace(kv.Value.Path) &&
+                    string.Equals(kv.Value.Source, "none", StringComparison.OrdinalIgnoreCase))
+                {
+                    kv.Value.LastScanUtc = 0.0;
+                }
+            }
+
+            return data;
         }
         catch
         {
@@ -203,42 +280,72 @@ public sealed class ThumbCache
 
     private void SaveDbNow()
     {
-        Dictionary<string, ThumbEntry> snapshot;
-        lock (_dbLock)
+        lock (_saveNowLock)
         {
-            snapshot = new Dictionary<string, ThumbEntry>(_db, StringComparer.OrdinalIgnoreCase);
-        }
+            Dictionary<string, ThumbEntry> snapshot;
+            lock (_dbLock)
+            {
+                snapshot = new Dictionary<string, ThumbEntry>(_db, StringComparer.OrdinalIgnoreCase);
+            }
 
-        var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-        var tmp = Path.Combine(CacheDir, $"{Path.GetFileNameWithoutExtension(CachePath)}.{Environment.ProcessId}.{Thread.CurrentThread.ManagedThreadId}.tmp");
+            var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+            var tmp = Path.Combine(CacheDir, $"{Path.GetFileNameWithoutExtension(CachePath)}.{Environment.ProcessId}.{Thread.CurrentThread.ManagedThreadId}.tmp");
 
-        try
-        {
-            File.WriteAllText(tmp, json);
-            File.Copy(tmp, CachePath, true);
-        }
-        catch
-        {
-            try { File.WriteAllText(CachePath, json); } catch { }
-        }
-        finally
-        {
-            try { File.Delete(tmp); } catch { }
-        }
+            try
+            {
+                File.WriteAllText(tmp, json);
+                File.Copy(tmp, CachePath, true);
+            }
+            catch
+            {
+                try { File.WriteAllText(CachePath, json); } catch { }
+            }
+            finally
+            {
+                try { File.Delete(tmp); } catch { }
+            }
 
-        _lastSave = DateTime.UtcNow;
-        _pending = false;
+            _lastSave = DateTime.UtcNow;
+            _pending = false;
+        }
     }
 
     private void SaveDbThrottled()
     {
-        if ((DateTime.UtcNow - _lastSave).TotalSeconds >= 0.5)
+        var now = DateTime.UtcNow;
+        var elapsed = now - _lastSave;
+        if (elapsed.TotalSeconds >= 0.5)
         {
             SaveDbNow();
+            return;
         }
-        else
+
+        _pending = true;
+
+        // Ensure pending writes flush even if the cache is only updated once (e.g. user scrolls one row).
+        var dueMs = (int)Math.Clamp((0.55 - elapsed.TotalSeconds) * 1000.0, 50.0, 1000.0);
+        _saveTimer ??= new Timer(_ =>
         {
-            _pending = true;
+            try
+            {
+                if (_pending)
+                {
+                    SaveDbNow();
+                }
+            }
+            catch
+            {
+                // ignore background save failures
+            }
+        });
+
+        try
+        {
+            _saveTimer.Change(dueMs, Timeout.Infinite);
+        }
+        catch
+        {
+            // ignore timer failures
         }
     }
 
@@ -451,37 +558,36 @@ public sealed class ThumbCache
             return null;
         }
 
-        JsonElement content;
+        var relPaths = new List<string>();
         try
         {
             using var doc = JsonDocument.Parse(File.ReadAllText(layout));
-            if (!doc.RootElement.TryGetProperty("content", out content))
+            if (!doc.RootElement.TryGetProperty("content", out var content))
             {
                 return null;
+            }
+
+            if (content.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in content.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.Object && item.TryGetProperty("path", out var pathProp))
+                    {
+                        if (pathProp.ValueKind == JsonValueKind.String)
+                        {
+                            relPaths.Add(pathProp.GetString() ?? string.Empty);
+                        }
+                    }
+                    else if (item.ValueKind == JsonValueKind.String)
+                    {
+                        relPaths.Add(item.GetString() ?? string.Empty);
+                    }
+                }
             }
         }
         catch
         {
             return null;
-        }
-
-        var relPaths = new List<string>();
-        if (content.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var item in content.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.Object && item.TryGetProperty("path", out var pathProp))
-                {
-                    if (pathProp.ValueKind == JsonValueKind.String)
-                    {
-                        relPaths.Add(pathProp.GetString() ?? string.Empty);
-                    }
-                }
-                else if (item.ValueKind == JsonValueKind.String)
-                {
-                    relPaths.Add(item.GetString() ?? string.Empty);
-                }
-            }
         }
 
         if (relPaths.Count == 0)
@@ -495,7 +601,8 @@ public sealed class ThumbCache
             return ThumbExts.Any(ext => low.EndsWith(ext));
         }
 
-        var pairs = relPaths.Select(rp => (Raw: rp, Low: rp.ToLowerInvariant())).ToList();
+        static string Norm(string s) => (s ?? string.Empty).Replace('\\', '/');
+        var pairs = relPaths.Select(rp => (Raw: rp, Low: Norm(rp).ToLowerInvariant())).ToList();
 
         foreach (var (raw, low) in pairs)
         {
@@ -561,6 +668,7 @@ public sealed class ThumbCache
     {
         public string Path { get; set; } = string.Empty;
         public double MTime { get; set; }
+        public double LastScanUtc { get; set; }
         public string Source { get; set; } = string.Empty;
     }
 }

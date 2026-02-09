@@ -9,20 +9,23 @@
 
 
     <!-- Base colors -->
-    <Color x:Key="BackgroundColor">#050509</Color>
-    <Color x:Key="SurfaceColor">#111119</Color>
-    <Color x:Key="SurfaceAltColor">#171723</Color>
-    <Color x:Key="AccentColor">#1F9AEC</Color>
-    <Color x:Key="DangerColor">#F97373</Color>
+    <!-- Dark theme palette that matches the "original" screenshots (dark gray, not pure black). -->
+    <!-- Slightly lifted to avoid "too black" main body while staying properly dark. -->
+    <Color x:Key="BackgroundColor">#151515</Color>
+    <Color x:Key="SurfaceColor">#1E1E1E</Color>
+    <Color x:Key="SurfaceAltColor">#242424</Color>
+    <!-- Activated status uses AccentBrush via StatusToBrushConverter, so keep this green. -->
+    <Color x:Key="AccentColor">#48B050</Color>
+    <Color x:Key="DangerColor">#F04030</Color>
     <Color x:Key="WarningColor">#F59E0B</Color>
-    <Color x:Key="TextPrimaryColor">#E4E4E7</Color>
-    <Color x:Key="TextSecondaryColor">#A1A1AA</Color>
-    <Color x:Key="BorderColor">#111119</Color>
-    <Color x:Key="DividerColor">#101018</Color>
-    <Color x:Key="HoverColor">#33334A</Color>
-    <Color x:Key="PressedColor">#26263A</Color>
-    <Color x:Key="RowHoverColor">#2F3246</Color>
-    <Color x:Key="RowSelectedColor">#3A3E5A</Color>
+    <Color x:Key="TextPrimaryColor">#E6E6E6</Color>
+    <Color x:Key="TextSecondaryColor">#B0B0B0</Color>
+    <Color x:Key="BorderColor">#303030</Color>
+    <Color x:Key="DividerColor">#363636</Color>
+    <Color x:Key="HoverColor">#2A2A2A</Color>
+    <Color x:Key="PressedColor">#242424</Color>
+    <Color x:Key="RowHoverColor">#202020</Color>
+    <Color x:Key="RowSelectedColor">#2C2C2C</Color>
 
 
     <!-- Brushes -->
@@ -44,22 +47,13 @@
 
     <!-- Glassy overlays -->
     <LinearGradientBrush x:Key="GlassGradientBrush" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#2B2E44" Offset="0" />
-        <GradientStop Color="#212133" Offset="1" />
+        <GradientStop Color="#262626" Offset="0" />
+        <GradientStop Color="#1E1E1E" Offset="1" />
     </LinearGradientBrush>
 
 
     <!-- Effects -->
-    <DropShadowEffect x:Key="WindowShadow"
-                      BlurRadius="18"
-                      Opacity="0.4"
-                      ShadowDepth="0"
-                      Color="#000000" />
-    <DropShadowEffect x:Key="CardShadow"
-                      BlurRadius="10"
-                      Opacity="0.28"
-                      ShadowDepth="0"
-                      Color="#000000" />
+    <!-- Kept in App.xaml so it is always present even if the theme dictionary fails to load. -->
 
 
     <!-- Typography -->
@@ -152,6 +146,7 @@
     <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>
 
 
@@ -164,6 +159,40 @@
     <Style TargetType="Hyperlink">
         <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
         <Setter Property="TextDecorations" Value="{x:Null}" />
+    </Style>
+
+    <!-- Tooltips -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,6" />
+        <Setter Property="MaxWidth" Value="420" />
+        <Setter Property="ToolTipService.InitialShowDelay" Value="350" />
+        <Setter Property="ToolTipService.BetweenShowDelay" Value="50" />
+        <Setter Property="ToolTipService.ShowDuration" Value="20000" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="8"
+                            Effect="{DynamicResource CardShadow}">
+                        <ContentPresenter Margin="{TemplateBinding Padding}">
+                            <ContentPresenter.Resources>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                    <Setter Property="TextTrimming" Value="None" />
+                                </Style>
+                            </ContentPresenter.Resources>
+                        </ContentPresenter>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
 
@@ -402,8 +431,8 @@
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="Padding" Value="18,8,18,7" />
-        <Setter Property="Margin" Value="4,0,4,0" />
+        <Setter Property="Padding" Value="12,8,12,7" />
+        <Setter Property="Margin" Value="2,0,2,0" />
         <Setter Property="MinHeight" Value="38" />
         <Setter Property="Template">
             <Setter.Value>
@@ -444,6 +473,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="ToolTipService.ShowOnDisabled" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
@@ -526,8 +556,8 @@
 
 
     <Style x:Key="PrimaryActionButton" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-        <Setter Property="Background" Value="#3B82F6" />
-        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        <Setter Property="Foreground" Value="White" />
         <Setter Property="Height" Value="32" />
         <Setter Property="Padding" Value="16,0" />
         <Setter Property="FontSize" Value="13" />
@@ -544,10 +574,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#2563EB" />
+                            <Setter TargetName="border" Property="Opacity" Value="0.9" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#1D4ED8" />
+                            <Setter TargetName="border" Property="Opacity" Value="0.8" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.6" />
@@ -561,11 +591,11 @@
 
     <Style x:Key="SecondaryActionButton" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
         <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Foreground" Value="#A1A1AA" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         <Setter Property="Height" Value="32" />
         <Setter Property="Padding" Value="16,0" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="BorderBrush" Value="#3A3A4A" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Template">
             <Setter.Value>
@@ -581,8 +611,8 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="border" Property="Background" Value="#2A2A3A" />
-                            <Setter Property="Foreground" Value="#E4E4E7" />
+                            <Setter TargetName="border" Property="Background" Value="{DynamicResource HoverBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.6" />
@@ -647,7 +677,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Root" Property="Background" Value="#3A3A4A" />
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource HoverBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Root" Property="Background" Value="{DynamicResource PressedBrush}" />
@@ -705,37 +735,16 @@
                 <ControlTemplate TargetType="DataGridRow">
                     <Border x:Name="RowBorder"
                             BorderBrush="{DynamicResource DividerBrush}"
-                            BorderThickness="0,0,0,1">
-                        <Border.Background>
-                            <SolidColorBrush Color="{StaticResource SurfaceAltColor}" />
-                        </Border.Background>
+                            BorderThickness="0,0,0,1"
+                            Background="{DynamicResource SurfaceAltBrush}">
                         <DataGridCellsPresenter />
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource RowHoverBrush}" />
+                        </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource RowSelectedBrush}" />
-                        </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard FillBehavior="Stop">
-                                        <ColorAnimation Storyboard.TargetName="RowBorder"
-                                                        Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                        To="{StaticResource RowHoverColor}"
-                                                        Duration="0:0:0.15" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard FillBehavior="Stop">
-                                        <ColorAnimation Storyboard.TargetName="RowBorder"
-                                                        Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                                        To="{StaticResource SurfaceAltColor}"
-                                                        Duration="0:0:0.15" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -773,15 +782,5 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-    </Style>
-
-
-    <!-- ToolTip -->
-    <Style TargetType="ToolTip">
-        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="8,6" />
     </Style>
 </ResourceDictionary>

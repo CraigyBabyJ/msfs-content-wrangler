@@ -8,10 +8,13 @@
     WindowStartupLocation="CenterOwner"
     WindowStyle="None"
     ShowInTaskbar="False"
+    Icon="/icons/app.ico"
     Background="Transparent">
 
     <Border Background="{DynamicResource SurfaceAltBrush}"
             CornerRadius="10"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
             Effect="{DynamicResource CardShadow}">
         <Grid Margin="16">
             <Grid.RowDefinitions>
@@ -28,7 +31,8 @@
             <ComboBox x:Name="PickerBox"
                       Grid.Row="1"
                       MinWidth="640"
-                      Style="{StaticResource ModernComboBoxStyle}" />
+                      ToolTip="Select which Content.xml to load."
+                      Style="{DynamicResource ModernComboBoxStyle}" />
 
             <StackPanel Grid.Row="2"
                         Orientation="Horizontal"
@@ -39,12 +43,14 @@
                         IsDefault="True"
                         Click="OnOkClick"
                         Margin="0,0,6,0"
-                        Style="{StaticResource SecondaryActionButton}" />
+                        ToolTip="Load the selected Content.xml."
+                        Style="{DynamicResource SecondaryActionButton}" />
                 <Button Content="Cancel"
                         Width="90"
                         IsCancel="True"
                         Click="OnCancelClick"
-                        Style="{StaticResource SecondaryActionButton}" />
+                        ToolTip="Cancel."
+                        Style="{DynamicResource SecondaryActionButton}" />
             </StackPanel>
         </Grid>
     </Border>

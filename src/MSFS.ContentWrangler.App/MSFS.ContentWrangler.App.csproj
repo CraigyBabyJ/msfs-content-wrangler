@@ -8,6 +8,7 @@
     <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
     <ApplicationIcon>..\..\icons\app.ico</ApplicationIcon>
+    <Version>0.2.3</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,9 +22,7 @@
     <Content Include="..\..\rules.json" Link="rules.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\icons\app.ico" Link="icons\app.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Resource Include="..\..\icons\app.ico" Link="icons\app.ico" />
     <Content Include="..\..\icons\app.png" Link="icons\app.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
