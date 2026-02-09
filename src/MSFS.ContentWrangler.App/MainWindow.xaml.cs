@@ -92,13 +92,15 @@ public sealed partial class MainWindow : Window
             var info = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
             if (!string.IsNullOrWhiteSpace(info?.InformationalVersion))
             {
-                return info.InformationalVersion;
+                return NormalizeVersionLabel(info.InformationalVersion);
             }
 
             var version = assembly.GetName().Version;
             if (version is not null)
             {
-                return $"v{version}";
+                // Drop the revision to keep the title short/readable.
+                var build = Math.Max(0, version.Build);
+                return $"v{version.Major}.{version.Minor}.{build}";
             }
         }
         catch
@@ -106,6 +108,47 @@ public sealed partial class MainWindow : Window
         }
 
         return "(dev)";
+    }
+
+    private static string NormalizeVersionLabel(string raw)
+    {
+        // GitHub tags and InformationalVersion often look like:
+        // - "v1.2.3"
+        // - "1.2.3"
+        // - "1.2.3+abcdef" (build metadata)
+        // - "v1.2.3-rc.1+abcdef"
+        var s = (raw ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(s))
+        {
+            return "(dev)";
+        }
+
+        // Strip build metadata and any trailing whitespace.
+        var plus = s.IndexOf('+');
+        if (plus >= 0)
+        {
+            s = s[..plus];
+        }
+        s = s.Trim();
+
+        // Prefer a 'v' prefix for display.
+        if (s.Length > 0 && (s[0] == 'v' || s[0] == 'V'))
+        {
+            s = "v" + s[1..];
+        }
+        else if (char.IsDigit(s[0]))
+        {
+            s = "v" + s;
+        }
+
+        // Clamp extreme cases (shouldn't happen with tagged releases).
+        const int maxLen = 24;
+        if (s.Length > maxLen)
+        {
+            s = s[..maxLen];
+        }
+
+        return s;
     }
 
     private void TrySetWindowIcon()
@@ -227,7 +270,7 @@ public sealed partial class MainWindow : Window
             "GitHub",
             "TikTok",
             "Website",
-            "Donate",
+            "Buy Me a Coffee",
         };
 
         foreach (var key in preferredOrder)
@@ -259,7 +302,7 @@ public sealed partial class MainWindow : Window
         if (l.Contains("discord")) return "discord.svg";
         if (l.Contains("github")) return "github.svg";
         if (l.Contains("tiktok")) return "tiktok.svg";
-        if (l.Contains("donate") || l.Contains("paypal")) return "donate.svg";
+        if (l.Contains("coffee") || l.Contains("buy me a coffee") || l.Contains("bmc")) return "buymeacoffee.svg";
         if (l.Contains("website") || l.Contains("web") || l.Contains("itch")) return "website.svg";
         return "globe.svg";
     }

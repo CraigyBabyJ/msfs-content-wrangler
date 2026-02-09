@@ -1,17 +1,15 @@
 using System.Globalization;
 using System.IO;
 using System.Net;
-using System.Text.RegularExpressions;
 using System.Windows.Data;
 using System.Windows.Media;
+using System.Xml.Linq;
 
 namespace MSFS.ContentWrangler.App;
 
-// Minimal SVG support for simple icon files that contain one or more <path d="..."> elements.
-// We only use the path "d" data and ignore strokes/fills/etc.
+// Minimal SVG support for footer icons (path/circle/ellipse/line). We ignore styling.
 public sealed class SvgFileToGeometryConverter : IValueConverter
 {
-    private static readonly Regex PathDRegex = new("d\\s*=\\s*\"([^\"]+)\"", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Dictionary<string, Geometry> Cache = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object CacheLock = new();
 
@@ -51,29 +49,81 @@ public sealed class SvgFileToGeometryConverter : IValueConverter
                 return Geometry.Empty;
             }
 
-            var svg = File.ReadAllText(path);
-            var matches = PathDRegex.Matches(svg);
-            if (matches.Count == 0)
+            var svgText = File.ReadAllText(path);
+            var group = new GeometryGroup();
+            XDocument doc;
+            try
             {
-                return Geometry.Empty;
+                doc = XDocument.Parse(svgText);
+            }
+            catch
+            {
+                // Some SVGs might include leading/trailing junk; try a looser parse.
+                doc = XDocument.Parse(svgText.Trim());
             }
 
-            var group = new GeometryGroup();
-            foreach (Match m in matches)
+            foreach (var el in doc.Descendants())
             {
-                var d = WebUtility.HtmlDecode(m.Groups[1].Value);
-                if (string.IsNullOrWhiteSpace(d))
+                switch (el.Name.LocalName.ToLowerInvariant())
                 {
-                    continue;
-                }
+                    case "path":
+                    {
+                        var d = el.Attribute("d")?.Value;
+                        if (string.IsNullOrWhiteSpace(d))
+                        {
+                            break;
+                        }
 
-                try
-                {
-                    group.Children.Add(Geometry.Parse(d));
-                }
-                catch
-                {
-                    // If a specific path can't be parsed, skip it rather than failing the whole icon.
+                        d = WebUtility.HtmlDecode(d);
+                        try
+                        {
+                            group.Children.Add(Geometry.Parse(d));
+                        }
+                        catch
+                        {
+                            // Skip invalid path segments.
+                        }
+
+                        break;
+                    }
+                    case "circle":
+                    {
+                        if (!TryGetDouble(el, "cx", out var cx) ||
+                            !TryGetDouble(el, "cy", out var cy) ||
+                            !TryGetDouble(el, "r", out var r))
+                        {
+                            break;
+                        }
+
+                        group.Children.Add(new EllipseGeometry(new System.Windows.Point(cx, cy), r, r));
+                        break;
+                    }
+                    case "ellipse":
+                    {
+                        if (!TryGetDouble(el, "cx", out var cx) ||
+                            !TryGetDouble(el, "cy", out var cy) ||
+                            !TryGetDouble(el, "rx", out var rx) ||
+                            !TryGetDouble(el, "ry", out var ry))
+                        {
+                            break;
+                        }
+
+                        group.Children.Add(new EllipseGeometry(new System.Windows.Point(cx, cy), rx, ry));
+                        break;
+                    }
+                    case "line":
+                    {
+                        if (!TryGetDouble(el, "x1", out var x1) ||
+                            !TryGetDouble(el, "y1", out var y1) ||
+                            !TryGetDouble(el, "x2", out var x2) ||
+                            !TryGetDouble(el, "y2", out var y2))
+                        {
+                            break;
+                        }
+
+                        group.Children.Add(new LineGeometry(new System.Windows.Point(x1, y1), new System.Windows.Point(x2, y2)));
+                        break;
+                    }
                 }
             }
 
@@ -90,5 +140,23 @@ public sealed class SvgFileToGeometryConverter : IValueConverter
             return Geometry.Empty;
         }
     }
-}
 
+    private static bool TryGetDouble(XElement el, string attrName, out double value)
+    {
+        value = 0;
+        var s = el.Attribute(attrName)?.Value;
+        if (string.IsNullOrWhiteSpace(s))
+        {
+            return false;
+        }
+
+        // Strip a trailing "px" if present.
+        s = s.Trim();
+        if (s.EndsWith("px", StringComparison.OrdinalIgnoreCase))
+        {
+            s = s[..^2];
+        }
+
+        return double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+    }
+}

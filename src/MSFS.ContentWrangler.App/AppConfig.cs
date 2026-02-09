@@ -32,8 +32,8 @@ public sealed class AppConfig
                 { "Discord", "https://discord.gg/ErQduaBqAg" },
                 { "GitHub", "https://github.com/CraigyBabyJ/msfs-content-wrangler" },
                 { "TikTok", "https://tiktok.com/@craigybabyj_new" },
-                { "Website", "https://craigybabyj.itch.io/" },
-                { "Donate", "https://paypal.me/CJames440?locale.x=en_GB&country.x=GB" },
+                { "Website", "https://www.craigybabyj.com" },
+                { "Buy Me a Coffee", "https://www.buymeacoffee.com/craigybabyj" },
             }
         };
 
