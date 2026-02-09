@@ -857,6 +857,12 @@ public sealed partial class MainWindow : Window
             e.Row.ClearValue(DataGridRow.BackgroundProperty);
             e.Row.ClearValue(DataGridRow.ForegroundProperty);
         }
+
+        // Queue thumbnail discovery as rows become visible (covers scrolling and filtering).
+        if (_config.ShowThumbnails && _thumbLoader != null && row.ThumbnailState == ThumbnailState.Unknown)
+        {
+            _ = _thumbLoader.QueueAsync(row);
+        }
     }
 
     private void OnGridSelectionChanged(object sender, SelectionChangedEventArgs e)
