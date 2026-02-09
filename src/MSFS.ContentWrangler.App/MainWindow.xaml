@@ -492,16 +492,21 @@
                         <ItemsControl x:Name="FooterLinks" Grid.Column="0">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
+                                    <WrapPanel Orientation="Horizontal" />
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <TextBlock Margin="0,0,10,0">
-                                        <Hyperlink NavigateUri="{Binding Uri, Mode=OneWay}" RequestNavigate="OnFooterLinkNavigate">
-                                            <Run Text="{Binding Label, Mode=OneWay}" />
-                                        </Hyperlink>
-                                    </TextBlock>
+                                    <Button Style="{StaticResource FooterIconButtonStyle}"
+                                            ToolTip="{Binding Label, Mode=OneWay}"
+                                            Tag="{Binding Uri, Mode=OneWay}"
+                                            Click="OnFooterLinkClicked">
+                                        <Viewbox Width="18" Height="18" Stretch="Uniform">
+                                            <Path Data="{Binding IconFileName, Converter={StaticResource SvgFileToGeometryConverter}}"
+                                                  Fill="{Binding RelativeSource={RelativeSource AncestorType=Button}, Path=Foreground}"
+                                                  Stretch="Uniform" />
+                                        </Viewbox>
+                                    </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>

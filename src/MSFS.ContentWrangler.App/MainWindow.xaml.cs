@@ -219,14 +219,49 @@ public sealed partial class MainWindow : Window
     {
         FooterBrand.Text = "CraigyBabyJ #flywithcraig";
         var links = new List<LinkItem>();
+
+        // Prefer a stable, intentional ordering (Dictionary order is not guaranteed).
+        var preferredOrder = new[]
+        {
+            "Discord",
+            "GitHub",
+            "TikTok",
+            "Website",
+            "Donate",
+        };
+
+        foreach (var key in preferredOrder)
+        {
+            if (_config.Links.TryGetValue(key, out var url) && Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                links.Add(new LinkItem(key, uri, IconForLabel(key)));
+            }
+        }
+
         foreach (var kv in _config.Links)
         {
             if (Uri.TryCreate(kv.Value, UriKind.Absolute, out var uri))
             {
-                links.Add(new LinkItem(kv.Key, uri));
+                if (links.Any(l => string.Equals(l.Label, kv.Key, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                links.Add(new LinkItem(kv.Key, uri, IconForLabel(kv.Key)));
             }
         }
         FooterLinks.ItemsSource = links;
+    }
+
+    private static string IconForLabel(string label)
+    {
+        var l = (label ?? string.Empty).Trim().ToLowerInvariant();
+        if (l.Contains("discord")) return "discord.svg";
+        if (l.Contains("github")) return "github.svg";
+        if (l.Contains("tiktok")) return "tiktok.svg";
+        if (l.Contains("donate") || l.Contains("paypal")) return "donate.svg";
+        if (l.Contains("website") || l.Contains("web") || l.Contains("itch")) return "website.svg";
+        return "globe.svg";
     }
 
     private void ApplyThumbnailVisibility()
@@ -930,5 +965,20 @@ public sealed partial class MainWindow : Window
             // ignore
         }
         e.Handled = true;
+    }
+
+    private void OnFooterLinkClicked(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (sender is Button btn && btn.Tag is Uri uri)
+            {
+                Process.Start(new ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true });
+            }
+        }
+        catch
+        {
+            // ignore
+        }
     }
 }
