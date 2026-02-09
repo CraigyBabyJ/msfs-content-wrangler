@@ -3,8 +3,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:MSFS.ContentWrangler.App">
 
+
     <local:StatusToBrushConverter x:Key="StatusToBrushConverter" />
     <local:SvgFileToGeometryConverter x:Key="SvgFileToGeometryConverter" />
+
 
     <!-- Base colors -->
     <Color x:Key="BackgroundColor">#050509</Color>
@@ -22,6 +24,7 @@
     <Color x:Key="RowHoverColor">#2F3246</Color>
     <Color x:Key="RowSelectedColor">#3A3E5A</Color>
 
+
     <!-- Brushes -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
@@ -38,11 +41,13 @@
     <SolidColorBrush x:Key="RowHoverBrush" Color="{StaticResource RowHoverColor}" x:Shared="False" />
     <SolidColorBrush x:Key="RowSelectedBrush" Color="{StaticResource RowSelectedColor}" x:Shared="False" />
 
+
     <!-- Glassy overlays -->
     <LinearGradientBrush x:Key="GlassGradientBrush" StartPoint="0,0" EndPoint="1,1">
         <GradientStop Color="#2B2E44" Offset="0" />
         <GradientStop Color="#212133" Offset="1" />
     </LinearGradientBrush>
+
 
     <!-- Effects -->
     <DropShadowEffect x:Key="WindowShadow"
@@ -56,6 +61,7 @@
                       ShadowDepth="0"
                       Color="#000000" />
 
+
     <!-- Typography -->
     <Style TargetType="Window">
         <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI" />
@@ -64,10 +70,12 @@
         <Setter Property="Background" Value="{DynamicResource BackgroundBrush}" />
     </Style>
 
+
     <Style TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
+
 
     <Style TargetType="TextBox">
         <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -95,6 +103,7 @@
         </Setter>
     </Style>
 
+
     <!-- Lists -->
     <Style TargetType="ListBox">
         <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -103,6 +112,7 @@
         <Setter Property="Padding" Value="2" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>
+
 
     <Style TargetType="ListBoxItem">
         <Setter Property="Background" Value="Transparent" />
@@ -138,20 +148,24 @@
         </Setter>
     </Style>
 
+
     <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="16" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
+
 
     <Style x:Key="SecondaryTextStyle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
         <Setter Property="FontSize" Value="12" />
     </Style>
 
+
     <Style TargetType="Hyperlink">
         <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
         <Setter Property="TextDecorations" Value="{x:Null}" />
     </Style>
+
 
     <!-- Context menus (e.g., DataGrid right-click) -->
     <Style TargetType="ContextMenu">
@@ -162,6 +176,7 @@
         <Setter Property="Padding" Value="6" />
         <Setter Property="HasDropShadow" Value="True" />
     </Style>
+
 
     <Style TargetType="MenuItem">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
@@ -192,6 +207,7 @@
         </Setter>
     </Style>
 
+
     <Style TargetType="Separator">
         <Setter Property="Margin" Value="4,6" />
         <Setter Property="Background" Value="{DynamicResource DividerBrush}" />
@@ -203,6 +219,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+
 
     <!-- TextBox with watermark -->
     <Style x:Key="SearchTextBoxStyle" TargetType="TextBox">
@@ -252,6 +269,7 @@
         </Setter>
     </Style>
 
+
     <!-- ComboBox -->
     <Style x:Key="StandardComboBoxStyle" TargetType="ComboBox">
         <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -259,6 +277,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
     </Style>
+
 
     <!-- Dark themed combo box used elsewhere -->
     <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
@@ -303,6 +322,7 @@
                             </Border>
                         </ToggleButton>
 
+
                         <Popup x:Name="Popup"
                                IsOpen="{TemplateBinding IsDropDownOpen}"
                                Placement="Bottom"
@@ -332,17 +352,22 @@
         </Setter>
     </Style>
 
-    <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBoxStyle}" />
+
+    <!-- Set default ComboBox style -->
+    <Style TargetType="ComboBox" BasedOn="{StaticResource StandardComboBoxStyle}" />
+
 
     <Style TargetType="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="Margin" Value="0,6,0,0" />
     </Style>
 
+
     <Style TargetType="RadioButton">
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
         <Setter Property="Margin" Value="0,6,0,0" />
     </Style>
+
 
     <!-- Tabs -->
     <Style TargetType="TabControl">
@@ -372,6 +397,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+
 
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
@@ -408,6 +434,7 @@
         </Setter>
     </Style>
 
+
     <!-- Buttons -->
     <Style x:Key="BaseButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
@@ -442,22 +469,27 @@
         </Setter>
     </Style>
 
+
     <Style TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}" />
+
 
     <Style x:Key="AccentButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
         <Setter Property="Foreground" Value="#05070A" />
     </Style>
 
+
     <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
         <Setter Property="Background" Value="{DynamicResource DangerBrush}" />
         <Setter Property="Foreground" Value="#1B0909" />
     </Style>
 
+
     <Style x:Key="SubtleButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
     </Style>
+
 
     <Style x:Key="FooterIconButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
@@ -492,6 +524,7 @@
         </Setter>
     </Style>
 
+
     <Style x:Key="PrimaryActionButton" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
         <Setter Property="Background" Value="#3B82F6" />
         <Setter Property="Foreground" Value="#FFFFFF" />
@@ -524,6 +557,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+
 
     <Style x:Key="SecondaryActionButton" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
         <Setter Property="Background" Value="Transparent" />
@@ -558,6 +592,7 @@
             </Setter.Value>
         </Setter>
     </Style>
+
 
     <Style x:Key="StatusBadgeButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
@@ -596,6 +631,7 @@
         </Setter>
     </Style>
 
+
     <!-- Title bar buttons -->
     <Style x:Key="TitleBarButtonStyle" TargetType="Button">
         <Setter Property="Background" Value="Transparent" />
@@ -622,6 +658,7 @@
         </Setter>
     </Style>
 
+
     <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -630,6 +667,7 @@
             </Trigger>
         </Style.Triggers>
     </Style>
+
 
     <!-- DataGrid -->
     <Style TargetType="DataGrid">
@@ -642,11 +680,13 @@
         <Setter Property="RowHeight" Value="64" />
     </Style>
 
+
     <Style TargetType="DataGridCell">
         <Setter Property="Padding" Value="12,0" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
     </Style>
+
 
     <Style TargetType="DataGridColumnHeader">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -656,6 +696,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource DividerBrush}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
     </Style>
+
 
     <Style TargetType="DataGridRow">
         <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -702,6 +743,7 @@
         </Setter>
     </Style>
 
+
     <!-- Scrollbars -->
     <Style TargetType="ScrollBar">
         <Setter Property="Width" Value="8" />
@@ -733,6 +775,7 @@
         </Setter>
     </Style>
 
+
     <!-- ToolTip -->
     <Style TargetType="ToolTip">
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
@@ -740,14 +783,5 @@
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="8,6" />
-    </Style>
-
-    <!-- ContextMenu -->
-    <Style TargetType="ContextMenu">
-        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
-        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="4" />
     </Style>
 </ResourceDictionary>
