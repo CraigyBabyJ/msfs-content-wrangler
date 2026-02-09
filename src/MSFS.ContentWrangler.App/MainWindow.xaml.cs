@@ -268,7 +268,6 @@ public sealed partial class MainWindow : Window
         {
             "Discord",
             "GitHub",
-            "TikTok",
             "Website",
             "Buy Me a Coffee",
         };
@@ -301,7 +300,6 @@ public sealed partial class MainWindow : Window
         var l = (label ?? string.Empty).Trim().ToLowerInvariant();
         if (l.Contains("discord")) return "discord.svg";
         if (l.Contains("github")) return "github.svg";
-        if (l.Contains("tiktok")) return "tiktok.svg";
         if (l.Contains("coffee") || l.Contains("buy me a coffee") || l.Contains("bmc")) return "buymeacoffee.svg";
         if (l.Contains("website") || l.Contains("web") || l.Contains("itch")) return "website.svg";
         return "globe.svg";
