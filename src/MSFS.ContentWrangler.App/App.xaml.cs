@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Threading;
@@ -16,6 +17,42 @@ public partial class App : System.Windows.Application
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
 
         InitializeComponent();
+
+        // Force-load the theme dictionary at startup. WPF can defer merged-dictionary loading,
+        // which can surface as missing StaticResource keys during StartupUri window load.
+        EnsureThemeResourcesLoaded();
+    }
+
+    private void EnsureThemeResourcesLoaded()
+    {
+        try
+        {
+            // If this key exists, AppStyles.xaml is already available.
+            _ = Resources["TitleBarButtonStyle"];
+            return;
+        }
+        catch
+        {
+            // continue, we'll try to load it explicitly
+        }
+
+        try
+        {
+            var uri = new Uri("pack://application:,,,/MSFS.ContentWrangler.App;component/Themes/AppStyles.xaml", UriKind.Absolute);
+            if (Resources.MergedDictionaries.Any(d => d.Source != null && d.Source.Equals(uri)))
+            {
+                return;
+            }
+
+            Resources.MergedDictionaries.Add(new ResourceDictionary { Source = uri });
+
+            // Validate that key resources exist; otherwise fail fast with a useful report.
+            _ = Resources["TitleBarButtonStyle"];
+        }
+        catch (Exception ex)
+        {
+            ShowFatal(ex, "ThemeResources");
+        }
     }
 
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

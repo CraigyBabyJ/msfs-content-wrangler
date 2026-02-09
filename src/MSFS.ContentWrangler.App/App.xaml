@@ -18,7 +18,8 @@
                               Color="#000000" />
 
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/AppStyles.xaml" />
+                <!-- Use explicit pack URI to avoid relative-URI quirks during BAML loading. -->
+                <ResourceDictionary Source="pack://application:,,,/MSFS.ContentWrangler.App;component/Themes/AppStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
