@@ -328,6 +328,9 @@
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{DynamicResource RowSelectedBrush}" />
                         </Trigger>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="Transparent" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
                         </Trigger>
@@ -360,6 +363,11 @@
                                       Background="Transparent"
                                       BorderThickness="0"
                                       IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <ContentPresenter />
+                                </ControlTemplate>
+                            </ToggleButton.Template>
                             <Border x:Name="Bd"
                                     HorizontalAlignment="Stretch"
                                     Background="{TemplateBinding Background}"

@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.7] - 2026-02-10
+- **UI Tweaks**: Further refinements to remove hover highlighting from dropdown menus (ComboBoxes) and dropdown items.
+
 ## [0.2.6] - 2026-02-10
 - **UI Tweaks**: Removed hover highlighting from dropdown menus (ComboBoxes) for a cleaner look.
 
