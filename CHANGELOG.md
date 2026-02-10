@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.8] - 2026-02-10
+- **Cleanup**: Removed unused asset files (TikTok, PayPal, and Donate icons) from the repository and build process.
+
 ## [0.2.7] - 2026-02-10
 - **UI Tweaks**: Further refinements to remove hover highlighting from dropdown menus (ComboBoxes) and dropdown items.
 
