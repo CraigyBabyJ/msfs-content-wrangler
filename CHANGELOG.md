@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.6] - 2026-02-10
+- **UI Tweaks**: Removed hover highlighting from dropdown menus (ComboBoxes) for a cleaner look.
+
 ## [0.2.5] - 2026-02-10
 - **CI Fix**: Fixed PowerShell syntax error in release workflow script.
 
