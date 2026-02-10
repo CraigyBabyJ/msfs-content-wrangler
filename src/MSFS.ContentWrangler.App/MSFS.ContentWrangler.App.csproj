@@ -8,7 +8,11 @@
     <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
     <ApplicationIcon>..\..\icons\app.ico</ApplicationIcon>
-    <Version>0.2.8</Version>
+    <Version>0.2.9</Version>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,21 +22,11 @@
   <ItemGroup>
     <!-- config.json is user-specific; do not ship a developer config in releases/CI builds. -->
     <!-- rules.json is optional: RulesStore falls back to defaults if missing. -->
-    <Content Include="..\..\rules.json"
-             Link="rules.json"
-             Condition="Exists('$(MSBuildProjectDirectory)\\..\\..\\rules.json')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <EmbeddedResource Include="..\..\rules.json" Link="rules.json" />
     <Resource Include="..\..\icons\app.ico" Link="icons\app.ico" />
-    <Content Include="..\..\icons\app.png" Link="icons\app.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\..\icons\*.svg" Link="icons\%(Filename)%(Extension)">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\..\icons\placeholder.png" Link="icons\placeholder.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Resource Include="..\..\icons\app.png" Link="icons\app.png" />
+    <EmbeddedResource Include="..\..\icons\*.svg" Link="icons\%(Filename)%(Extension)" />
+    <Resource Include="..\..\icons\placeholder.png" Link="icons\placeholder.png" />
   </ItemGroup>
 
 </Project>

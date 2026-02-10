@@ -8,6 +8,7 @@ config.json
 # .NET build artifacts
 bin/
 obj/
+dist/
 *.user
 *.suo
 

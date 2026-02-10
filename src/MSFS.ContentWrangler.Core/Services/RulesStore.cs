@@ -32,6 +32,23 @@ public static class RulesStore
         return Categorizer.DefaultRules;
     }
 
+    public static Rules Load(Stream stream)
+    {
+        try
+        {
+            var rules = JsonSerializer.Deserialize<Rules>(stream, Options);
+            if (rules != null)
+            {
+                return rules;
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+        return Categorizer.DefaultRules;
+    }
+
     public static void Save(string path, Rules rules)
     {
         try

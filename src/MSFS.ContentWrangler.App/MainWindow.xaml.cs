@@ -54,7 +54,25 @@ public sealed partial class MainWindow : Window
         _config = AppConfig.Load();
         _settings = AppSettingsStore.Load();
         _rulesPath = Path.Combine(AppContext.BaseDirectory, "rules.json");
-        _rules = RulesStore.Load(_rulesPath);
+        
+        if (File.Exists(_rulesPath))
+        {
+            _rules = RulesStore.Load(_rulesPath);
+        }
+        else
+        {
+            // Try loading from embedded resource
+            var assembly = typeof(App).Assembly;
+            using var stream = assembly.GetManifestResourceStream("MSFS.ContentWrangler.App.rules.json");
+            if (stream != null)
+            {
+                _rules = RulesStore.Load(stream);
+            }
+            else
+            {
+                _rules = RulesStore.Load(_rulesPath); // Will return defaults
+            }
+        }
 
         ApplyTheme();
         SetupFooter();

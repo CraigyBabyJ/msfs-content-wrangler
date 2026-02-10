@@ -37,15 +37,17 @@ jobs:
             -c Release `
             -r win-x64 `
             --self-contained true `
+            -o dist `
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=embedded `
             -p:Version=${{ steps.version.outputs.version }} `
             -p:InformationalVersion=${{ steps.version.outputs.tag }}
 
       - name: Package artifacts (zip)
         shell: pwsh
         run: |
-          $publishDir = Join-Path $PWD 'src/MSFS.ContentWrangler.App/bin/Release/net8.0-windows/win-x64/publish'
+          $publishDir = Join-Path $PWD 'dist'
           if (!(Test-Path $publishDir)) { throw "Publish output not found: $publishDir" }
 
           $zipName = "MSFS.ContentWrangler.${{ steps.version.outputs.tag }}.win-x64.zip"

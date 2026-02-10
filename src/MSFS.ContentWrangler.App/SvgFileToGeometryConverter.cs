@@ -43,102 +43,120 @@ public sealed class SvgFileToGeometryConverter : IValueConverter
     {
         try
         {
+            // Try loading from embedded resources first
+            var assembly = typeof(SvgFileToGeometryConverter).Assembly;
+            var resourceName = $"MSFS.ContentWrangler.App.icons.{fileName}";
+            
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream != null)
+            {
+                using var reader = new StreamReader(stream);
+                var svgText = reader.ReadToEnd();
+                return ParseSvg(svgText);
+            }
+
+            // Fallback to file system (for development or overrides)
             var path = Path.Combine(AppContext.BaseDirectory, "icons", fileName);
-            if (!File.Exists(path))
+            if (File.Exists(path))
             {
-                return Geometry.Empty;
+                var svgText = File.ReadAllText(path);
+                return ParseSvg(svgText);
             }
 
-            var svgText = File.ReadAllText(path);
-            var group = new GeometryGroup();
-            XDocument doc;
-            try
-            {
-                doc = XDocument.Parse(svgText);
-            }
-            catch
-            {
-                // Some SVGs might include leading/trailing junk; try a looser parse.
-                doc = XDocument.Parse(svgText.Trim());
-            }
-
-            foreach (var el in doc.Descendants())
-            {
-                switch (el.Name.LocalName.ToLowerInvariant())
-                {
-                    case "path":
-                    {
-                        var d = el.Attribute("d")?.Value;
-                        if (string.IsNullOrWhiteSpace(d))
-                        {
-                            break;
-                        }
-
-                        d = WebUtility.HtmlDecode(d);
-                        try
-                        {
-                            group.Children.Add(Geometry.Parse(d));
-                        }
-                        catch
-                        {
-                            // Skip invalid path segments.
-                        }
-
-                        break;
-                    }
-                    case "circle":
-                    {
-                        if (!TryGetDouble(el, "cx", out var cx) ||
-                            !TryGetDouble(el, "cy", out var cy) ||
-                            !TryGetDouble(el, "r", out var r))
-                        {
-                            break;
-                        }
-
-                        group.Children.Add(new EllipseGeometry(new System.Windows.Point(cx, cy), r, r));
-                        break;
-                    }
-                    case "ellipse":
-                    {
-                        if (!TryGetDouble(el, "cx", out var cx) ||
-                            !TryGetDouble(el, "cy", out var cy) ||
-                            !TryGetDouble(el, "rx", out var rx) ||
-                            !TryGetDouble(el, "ry", out var ry))
-                        {
-                            break;
-                        }
-
-                        group.Children.Add(new EllipseGeometry(new System.Windows.Point(cx, cy), rx, ry));
-                        break;
-                    }
-                    case "line":
-                    {
-                        if (!TryGetDouble(el, "x1", out var x1) ||
-                            !TryGetDouble(el, "y1", out var y1) ||
-                            !TryGetDouble(el, "x2", out var x2) ||
-                            !TryGetDouble(el, "y2", out var y2))
-                        {
-                            break;
-                        }
-
-                        group.Children.Add(new LineGeometry(new System.Windows.Point(x1, y1), new System.Windows.Point(x2, y2)));
-                        break;
-                    }
-                }
-            }
-
-            if (group.Children.Count == 0)
-            {
-                return Geometry.Empty;
-            }
-
-            group.Freeze();
-            return group;
+            return Geometry.Empty;
         }
         catch
         {
             return Geometry.Empty;
         }
+    }
+
+    private static Geometry ParseSvg(string svgText)
+    {
+        var group = new GeometryGroup();
+        XDocument doc;
+        try
+        {
+            doc = XDocument.Parse(svgText);
+        }
+        catch
+        {
+            // Some SVGs might include leading/trailing junk; try a looser parse.
+            doc = XDocument.Parse(svgText.Trim());
+        }
+
+        foreach (var el in doc.Descendants())
+        {
+            switch (el.Name.LocalName.ToLowerInvariant())
+            {
+                case "path":
+                {
+                    var d = el.Attribute("d")?.Value;
+                    if (string.IsNullOrWhiteSpace(d))
+                    {
+                        break;
+                    }
+
+                    d = WebUtility.HtmlDecode(d);
+                    try
+                    {
+                        group.Children.Add(Geometry.Parse(d));
+                    }
+                    catch
+                    {
+                        // Skip invalid path segments.
+                    }
+
+                    break;
+                }
+                case "circle":
+                {
+                    if (!TryGetDouble(el, "cx", out var cx) ||
+                        !TryGetDouble(el, "cy", out var cy) ||
+                        !TryGetDouble(el, "r", out var r))
+                    {
+                        break;
+                    }
+
+                    group.Children.Add(new EllipseGeometry(new System.Windows.Point(cx, cy), r, r));
+                    break;
+                }
+                case "ellipse":
+                {
+                    if (!TryGetDouble(el, "cx", out var cx) ||
+                        !TryGetDouble(el, "cy", out var cy) ||
+                        !TryGetDouble(el, "rx", out var rx) ||
+                        !TryGetDouble(el, "ry", out var ry))
+                    {
+                        break;
+                    }
+
+                    group.Children.Add(new EllipseGeometry(new System.Windows.Point(cx, cy), rx, ry));
+                    break;
+                }
+                case "line":
+                {
+                    if (!TryGetDouble(el, "x1", out var x1) ||
+                        !TryGetDouble(el, "y1", out var y1) ||
+                        !TryGetDouble(el, "x2", out var x2) ||
+                        !TryGetDouble(el, "y2", out var y2))
+                    {
+                        break;
+                    }
+
+                    group.Children.Add(new LineGeometry(new System.Windows.Point(x1, y1), new System.Windows.Point(x2, y2)));
+                    break;
+                }
+            }
+        }
+
+        if (group.Children.Count == 0)
+        {
+            return Geometry.Empty;
+        }
+
+        group.Freeze();
+        return group;
     }
 
     private static bool TryGetDouble(XElement el, string attrName, out double value)
