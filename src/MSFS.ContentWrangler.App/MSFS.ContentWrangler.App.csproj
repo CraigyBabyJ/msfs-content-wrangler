@@ -16,12 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- These files are optional in CI/release builds; app has runtime defaults if missing. -->
-    <Content Include="..\..\config.json"
-             Link="config.json"
-             Condition="Exists('$(MSBuildProjectDirectory)\\..\\..\\config.json')">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <!-- config.json is user-specific; do not ship a developer config in releases/CI builds. -->
+    <!-- rules.json is optional: RulesStore falls back to defaults if missing. -->
     <Content Include="..\..\rules.json"
              Link="rules.json"
              Condition="Exists('$(MSBuildProjectDirectory)\\..\\..\\rules.json')">
