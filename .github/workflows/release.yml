@@ -46,14 +46,14 @@ jobs:
         shell: pwsh
         run: |
           $publishDir = Join-Path $PWD 'src/MSFS.ContentWrangler.App/bin/Release/net8.0-windows/win-x64/publish'
-          if (!(Test-Path $publishDir)) { throw \"Publish output not found: $publishDir\" }
+          if (!(Test-Path $publishDir)) { throw "Publish output not found: $publishDir" }
 
-          $zipName = \"MSFS.ContentWrangler.${{ steps.version.outputs.tag }}.win-x64.zip\"
+          $zipName = "MSFS.ContentWrangler.${{ steps.version.outputs.tag }}.win-x64.zip"
           if (Test-Path $zipName) { Remove-Item $zipName -Force }
           Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zipName -Force
 
-          \"zip_name=$zipName\" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          \"publish_dir=$publishDir\" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "zip_name=$zipName" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "publish_dir=$publishDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
         id: package
 
       - name: Create GitHub Release
