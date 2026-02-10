@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.9] - 2026-02-10
+- **Single File Build**: The application now publishes as a single, standalone `.exe` file with no external dependencies or folders.
+- **Embedded Resources**: Icons and default rules are now embedded directly into the executable.
+- **Developer Experience**: Added `publish.ps1` helper script for easy local builds.
+
 ## [0.2.8] - 2026-02-10
 - **Cleanup**: Removed unused asset files (TikTok, PayPal, and Donate icons) from the repository and build process.
 
