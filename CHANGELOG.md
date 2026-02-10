@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.4] - 2026-02-10
+- **Build Fix**: Removed dependency on local `config.json` for release builds.
+
 ## [0.2.3] - 2026-02-09
 
 ### Added
